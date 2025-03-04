@@ -6,7 +6,7 @@ My Python game engine
 >> Cubes
 
 > ### Components
->> Custom Scripting
+>> Custom Scripting\
 >> Colliders
 
 ## How to use:
