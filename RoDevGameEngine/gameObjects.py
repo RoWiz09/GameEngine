@@ -1,22 +1,33 @@
 import glm, numpy as np, keyboard
 import OpenGL.GL as GL
 from RoDevGameEngine.mesh import Mesh
+from RoDevGameEngine.collider import OBB
 from RoDevGameEngine.transform import transform
     
 class gameObject3D:
-    def __init__(self, mesh : Mesh, components : list = None, my_transform : transform = transform(glm.vec3(0,0,0),glm.vec3(0,0,0),glm.vec3(1,1,1))):    
+    def __init__(self, mesh : Mesh, my_transform : transform = transform(glm.vec3(0,0,0),glm.vec3(0,0,0),glm.vec3(1,1,1))):    
         self.transform = my_transform
         mesh.transform = my_transform
+        self.OBB = OBB(my_transform)
+        self.components = []
         self.mesh = mesh
 
-        self.components = components
-        
-    def update(self, view_mat : glm.mat4x4, proj_mat : glm.mat4x4):
+    def set_components(self, my_components : list):
+        self.components = my_components
+
+    def update(self, view_mat : glm.mat4x4, proj_mat : glm.mat4x4, deltatime : float, gameObjects : list):
         self.mesh.update(view_mat, proj_mat)
+
+        for gameObject in gameObjects:
+            if self.OBB.intersects(gameObject.OBB):
+                print("test")
 
         if self.components:
             for component in self.components:
-                component.update()
+                component.update(deltatime)
+
+    def get_transform(self):
+        return self.transform
 
 class camera:
     """

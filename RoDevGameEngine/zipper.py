@@ -11,8 +11,10 @@ def readFolder(path : str):
 
     return files
 
-files=readFolder("assets")
-
-my_zip = zipfile.ZipFile("assets.zip", 'w')
-for file in files:
-    my_zip.write(file, file.removeprefix("assets\\"))
+def zipFolder():
+    files=readFolder("assets")
+    
+    my_zip = zipfile.ZipFile("assets.zip", 'w')
+    for file in files:
+        my_zip.write(file, file.removeprefix("assets\\"))
+        

@@ -1,7 +1,8 @@
 {
     "baseCamera":{"name":"playerCam","pos":[0,0,0],"rot":[0,0,0]},
     "3d":{
-        "testCube":{"mesh_obj":"cube","pos":[0,0,-1],"rot":[0,0,0],"scale":[1,1,1],"material":"assets\\materials\\testmat.romat"}
+        "testCube":{"mesh_obj":"cube","components":{"assets.scripts.BasicMovement":{"class_name":"BasicMovement"}},"pos":[10,0,0],"rot":[0,0,0],"scale":[5,5,1],"material":"assets\\materials\\testmat.romat"},
+        "testCube2":{"mesh_obj":"cube","components":{},"pos":[-3,2,0],"rot":[45,45,45],"scale":[5,9,1],"material":"assets\\materials\\testmat.romat"}
     },
     "2d":{
 

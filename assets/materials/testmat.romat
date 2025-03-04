@@ -1,5 +1,5 @@
 {
-    "color":[1, 0, 1, 1],
+    "color":[0.75, 0.75, 0.75, 1],
     "texture_path":".\\assets\\textures\\container.png",
     "shader":"['base_vert_3d','base_frag_3d']"
 }

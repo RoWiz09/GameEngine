@@ -1,5 +1,5 @@
 from OpenGL.GL import *
-import glm
+import glm, numpy as np
 
 class ShaderProgram():
     def __init__(self, vertex_path, fragment_path):
@@ -62,22 +62,23 @@ class BaseShaderProgram():
         #version 330 core
         layout (location = 0) in vec3 aPos;
         layout (location = 1) in vec2 aTexCoord;
+        layout (location = 2) in vec3 aNormal; // Normal attribute
 
-
-        out vec4 vertexColor; // specify a color output to the fragment shader
         out vec2 TexCoord;
+        out vec3 FragPos;
+        out vec3 Normal;
 
         uniform mat4 model;
         uniform mat4 view;
         uniform mat4 projection;
 
-        uniform vec4 color;
-
         void main()
         {
-            gl_Position = projection * view * model * vec4(aPos, 1.0);
-            vertexColor = color;
+            FragPos = vec3(model * vec4(aPos, 1.0)); // Transform position to world space
+            Normal = mat3(transpose(inverse(model))) * aNormal; // Transform normal to world space
             TexCoord = aTexCoord;
+
+            gl_Position = projection * view * model * vec4(aPos, 1.0);
         }
         """
 
@@ -92,15 +93,64 @@ class BaseShaderProgram():
         #version 330 core
         out vec4 FragColor;
 
-        in vec4 vertexColor;
         in vec2 TexCoord;
+        in vec3 FragPos;
+        in vec3 Normal;
 
-        uniform sampler2D texture1;   // Color texture
+        uniform sampler2D texture1; // Color texture
+        uniform vec3 viewPos;       // Camera position
+
+        // Maximum number of lights
+        const int MAX_LIGHTS = 8;
+
+        struct PointLight {
+            vec3 position;
+            vec3 color;
+            float intensity;
+            
+            float constant;
+            float linear;
+            float quadratic;
+        };
+
+        uniform int numLights;
+        uniform PointLight pointLights[MAX_LIGHTS];
+
         void main()
         {
-            vec4 textureColor = texture(texture1, TexCoord).rgba;
-            FragColor = vertexColor*textureColor;
-        } 
+            vec3 norm = normalize(Normal);
+            vec3 result = vec3(0.0);
+
+            for (int i = 0; i < numLights; i++)
+            {
+                // Compute the distance and attenuation
+                vec3 lightDir = normalize(pointLights[i].position - FragPos);
+                float diff = max(dot(norm, lightDir), 0.0);
+
+                // Specular lighting (Phong)
+                vec3 viewDir = normalize(viewPos - FragPos);
+                vec3 reflectDir = reflect(-lightDir, norm);
+                float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+
+                // Attenuation based on distance
+                float distance = length(pointLights[i].position - FragPos);
+                float attenuation = 1.0 / (pointLights[i].constant + 
+                                        pointLights[i].linear * distance + 
+                                        pointLights[i].quadratic * (distance * distance));
+
+                // Compute final light contribution
+                vec3 diffuse = diff * pointLights[i].color * pointLights[i].intensity;
+                vec3 specular = spec * pointLights[i].color * 0.5; // Specular strength
+                
+                result += (diffuse + specular) * attenuation;
+            }
+
+            // Apply texture color and combine with lighting
+            vec4 textureColor = texture(texture1, TexCoord);
+            vec3 finalColor = textureColor.rgb * result;
+
+            FragColor = vec4(finalColor, textureColor.a);
+        }
         """
 
         fragmentShader = glCreateShader(GL_FRAGMENT_SHADER)
@@ -139,6 +189,20 @@ class BaseShaderProgram():
 
     def SetFloat(self, name, value):
         glUniform1f(glGetUniformLocation(self.program, name), value)
+
+    def set_lights(self, light_data):
+        # Number of active lights
+        num_lights = 1
+        glUniform1i(glGetUniformLocation(self.program, "numLights"), num_lights)
+
+        # Set light data in the shader
+        for i, light in enumerate(light_data):
+            glUniform3f(glGetUniformLocation(self.program, f"pointLights[{i}].position"), *light["position"])
+            glUniform3f(glGetUniformLocation(self.program, f"pointLights[{i}].color"), *light["color"])
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].intensity"), light["intensity"])
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].constant"), light["constant"])
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].linear"), light["linear"])
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].quadratic"), light["quadratic"])
 
     def Use(self):
         glUseProgram(self.program)

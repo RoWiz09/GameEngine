@@ -7,7 +7,7 @@ class Mesh:
         self.mat = material
         self.transform = None
 
-        self.verticies = (len(verticies)//5)*3
+        self.verticies = (len(verticies)//8)*3
         # Generate Vertex Buffer Object (VBO) and Vertex Array Object (VAO)
         self.vbo = GL.glGenBuffers(1)
         self.vao = GL.glGenVertexArrays(1)
@@ -18,12 +18,16 @@ class Mesh:
         GL.glBufferData(GL.GL_ARRAY_BUFFER, verticies.nbytes, verticies, GL.GL_STATIC_DRAW)
 
         # Position Attribute
-        GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 5 * verticies.itemsize, ctypes.c_void_p(0))
+        GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, GL.GL_FALSE, 8 * verticies.itemsize, ctypes.c_void_p(0))
         GL.glEnableVertexAttribArray(0)
 
         # UV Attribute
-        GL.glVertexAttribPointer(1, 2, GL.GL_FLOAT, GL.GL_FALSE, 5 * verticies.itemsize, ctypes.c_void_p(3 * verticies.itemsize))
+        GL.glVertexAttribPointer(1, 2, GL.GL_FLOAT, GL.GL_FALSE, 8 * verticies.itemsize, ctypes.c_void_p(3 * verticies.itemsize))
         GL.glEnableVertexAttribArray(1)
+
+        # Normal Attribute
+        GL.glVertexAttribPointer(2, 3, GL.GL_FLOAT, GL.GL_FALSE, 8 * verticies.itemsize, ctypes.c_void_p(5 * verticies.itemsize))
+        GL.glEnableVertexAttribArray(2)
 
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
         GL.glBindVertexArray(0)
@@ -39,58 +43,59 @@ class Mesh:
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.verticies)
 
     cube_verts = np.array([
-        # Face y+
-        1.0, 1.0, 0.0,    1.0, 0.0,  # Bottom-right
-        0.0, 1.0, 0.0,   0.0, 0.0,  # Bottom-left
-        0.0, 1.0,  1.0,   0.0, 1.0,  # Top-left
+            # Face y+ (Top)
+            1.0, 1.0, 0.0,   1.0, 0.0,  0.0, 1.0, 0.0,  # Bottom-right
+            0.0, 1.0, 0.0,   0.0, 0.0,  0.0, 1.0, 0.0,  # Bottom-left
+            0.0, 1.0, 1.0,   0.0, 1.0,  0.0, 1.0, 0.0,  # Top-left
 
-        1.0, 1.0, 0.0,    1.0, 0.0,  # Bottom-right
-        0.0, 1.0, 1.0,    0.0, 1.0,  # Top-Left
-        1.0, 1.0, 1.0,     1.0, 1.0,  # Top-right
+            1.0, 1.0, 0.0,   1.0, 0.0,  0.0, 1.0, 0.0,  # Bottom-right
+            0.0, 1.0, 1.0,   0.0, 1.0,  0.0, 1.0, 0.0,  # Top-left
+            1.0, 1.0, 1.0,   1.0, 1.0,  0.0, 1.0, 0.0,  # Top-right
 
-        # Face y-
-        0.0, 0.0,  1.0,   0.0, 1.0,  # Top-left
-        0.0, 0.0, 0.0,   0.0, 0.0,  # Bottom-left
-        1.0, 0.0, 0.0,    1.0, 0.0,  # Bottom-right
+            # Face y- (Bottom)
+            0.0, 0.0, 1.0,   0.0, 1.0,  0.0, -1.0, 0.0,  # Top-left
+            0.0, 0.0, 0.0,   0.0, 0.0,  0.0, -1.0, 0.0,  # Bottom-left
+            1.0, 0.0, 0.0,   1.0, 0.0,  0.0, -1.0, 0.0,  # Bottom-right
 
-        1.0, 0.0, 1.0,     1.0, 1.0,  # Top-right
-        0.0, 0.0, 1.0,    0.0, 1.0,  # Top-Left
-        1.0, 0.0, 0.0,    1.0, 0.0,  # Bottom-right
+            1.0, 0.0, 1.0,   1.0, 1.0,  0.0, -1.0, 0.0,  # Top-right
+            0.0, 0.0, 1.0,   0.0, 1.0,  0.0, -1.0, 0.0,  # Top-Left
+            1.0, 0.0, 0.0,   1.0, 0.0,  0.0, -1.0, 0.0,  # Bottom-right
 
-        # Face x+
-        1.0, 0.0,  1.0,   0.0, 1.0,  # Top-left
-        1.0, 0.0, 0.0,   0.0, 0.0,  # Bottom-left
-        1.0, 1.0, 0.0,    1.0, 0.0,  # Bottom-right
+            # Face x+ (Right)
+            1.0, 0.0, 1.0,   0.0, 1.0,  1.0, 0.0, 0.0,  # Top-left
+            1.0, 0.0, 0.0,   0.0, 0.0,  1.0, 0.0, 0.0,  # Bottom-left
+            1.0, 1.0, 0.0,   1.0, 0.0,  1.0, 0.0, 0.0,  # Bottom-right
 
-        1.0, 1.0, 1.0,     1.0, 1.0,  # Top-right
-        1.0, 0.0, 1.0,    0.0, 1.0,  # Top-Left
-        1.0, 1.0, 0.0,    1.0, 0.0,  # Bottom-right
+            1.0, 1.0, 1.0,   1.0, 1.0,  1.0, 0.0, 0.0,  # Top-right
+            1.0, 0.0, 1.0,   0.0, 1.0,  1.0, 0.0, 0.0,  # Top-Left
+            1.0, 1.0, 0.0,   1.0, 0.0,  1.0, 0.0, 0.0,  # Bottom-right
 
-        # Face x-
-        0.0, 1.0, 0.0,    1.0, 0.0,  # Bottom-right
-        0.0, 0.0, 0.0,   0.0, 0.0,  # Bottom-left
-        0.0, 0.0,  1.0,   0.0, 1.0,  # Top-left
+            # Face x- (Left)
+            0.0, 1.0, 0.0,   1.0, 0.0,  -1.0, 0.0, 0.0,  # Bottom-right
+            0.0, 0.0, 0.0,   0.0, 0.0,  -1.0, 0.0, 0.0,  # Bottom-left
+            0.0, 0.0, 1.0,   0.0, 1.0,  -1.0, 0.0, 0.0,  # Top-left
 
-        0.0, 1.0, 0.0,    1.0, 0.0,  # Bottom-right
-        0.0, 0.0, 1.0,    0.0, 1.0,  # Top-Left
-        0.0, 1.0, 1.0,     1.0, 1.0,  # Top-right
+            0.0, 1.0, 0.0,   1.0, 0.0,  -1.0, 0.0, 0.0,  # Bottom-right
+            0.0, 0.0, 1.0,   0.0, 1.0,  -1.0, 0.0, 0.0,  # Top-Left
+            0.0, 1.0, 1.0,   1.0, 1.0,  -1.0, 0.0, 0.0,  # Top-right
 
-        # Face z+
-        0.0, 1.0, 1.0,    1.0, 0.0,  # Bottom-right
-        0.0, 0.0, 1.0,   0.0, 0.0,  # Bottom-left
-        1.0, 0.0,  1.0,   0.0, 1.0,  # Top-left
+            # Face z+ (Front)
+            0.0, 1.0, 1.0,   1.0, 0.0,  0.0, 0.0, 1.0,  # Bottom-right
+            0.0, 0.0, 1.0,   0.0, 0.0,  0.0, 0.0, 1.0,  # Bottom-left
+            1.0, 0.0, 1.0,   0.0, 1.0,  0.0, 0.0, 1.0,  # Top-left
 
-        0.0, 1.0, 1.0,    1.0, 0.0,  # Bottom-right
-        1.0, 0.0, 1.0,    0.0, 1.0,  # Top-Left
-        1.0, 1.0, 1.0,     1.0, 1.0,  # Top-right
+            0.0, 1.0, 1.0,   1.0, 0.0,  0.0, 0.0, 1.0,  # Bottom-right
+            1.0, 0.0, 1.0,   0.0, 1.0,  0.0, 0.0, 1.0,  # Top-Left
+            1.0, 1.0, 1.0,   1.0, 1.0,  0.0, 0.0, 1.0,  # Top-right
 
-        # Face z-
-        1.0, 0.0,  0.0,   0.0, 1.0,  # Top-left
-        0.0, 0.0, 0.0,   0.0, 0.0,  # Bottom-left
-        0.0, 1.0, 0.0,    1.0, 0.0,  # Bottom-right
+            # Face z- (Back)
+            1.0, 0.0, 0.0,   0.0, 1.0,  0.0, 0.0, -1.0,  # Top-left
+            0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0, -1.0,  # Bottom-left
+            0.0, 1.0, 0.0,   1.0, 0.0,  0.0, 0.0, -1.0,  # Bottom-right
 
-        1.0, 1.0, 0.0,     1.0, 1.0,  # Top-right
-        1.0, 0.0, 0.0,    0.0, 1.0,  # Top-Left
-        0.0, 1.0, 0.0,    1.0, 0.0,  # Bottom-right
+            1.0, 1.0, 0.0,   1.0, 1.0,  0.0, 0.0, -1.0,  # Top-right
+            1.0, 0.0, 0.0,   0.0, 1.0,  0.0, 0.0, -1.0,  # Top-Left
+            0.0, 1.0, 0.0,   1.0, 0.0,  0.0, 0.0, -1.0,  # Bottom-right
 
-    ], dtype=np.float32)
+        ], dtype=np.float32)
+

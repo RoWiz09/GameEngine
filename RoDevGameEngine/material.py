@@ -28,3 +28,4 @@ class Material:
 
         self.shader_prog.Use()
         self.shader_prog.SetMat4x4("model", model)
+        self.shader_prog.SetVec4("color", self.col)
