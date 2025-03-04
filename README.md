@@ -5,9 +5,9 @@ My Python game engine
 > ### Gameobjects
 >> Cubes
 
-> ### Scripting
->> Input handling
->> 
+> ### Components
+>> Custom Scripting
+>> Colliders
 
 ## How to use:
 Unfinished
