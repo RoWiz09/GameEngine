@@ -128,7 +128,6 @@ class SceneManager:
                     for object3d in self.sceneData["3d"].keys():
                         if isinstance(self.sceneData["3d"][object3d], dict):
                             if self.sceneData["3d"][object3d]["mesh_obj"] == "cube":
-                                print("cube")
                                 gameObject = gameObjects.gameObject3D(mesh.Mesh(
                                     mesh.Mesh.cube_verts, self.materials[self.sceneData["3d"][object3d]["material"]]),
                                     my_transform=transform.transform(

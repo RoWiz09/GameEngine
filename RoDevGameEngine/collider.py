@@ -1,7 +1,11 @@
 import glm
 
+class colliderTypes:
+    normal_collider = 0
+    trigger_collider = 1
+
 class OBB:
-    def __init__(self, transform):
+    def __init__(self, transform, collider_type : colliderTypes = colliderTypes.normal_collider):
         """
         - transform: The object's transform (position, rotation, scale)
         - base_size: The unscaled size of the object
@@ -9,6 +13,7 @@ class OBB:
         self.transform = transform  
         self.base_size = glm.vec3(1, 1, 1)
         self.offset = glm.vec3(0.5, 0.5, 0.5)  # Adjust for cubes with 0-1 vertices
+        self.colliderType = collider_type
 
     def get_rotation_matrix(self):
         """Extract the 3x3 rotation matrix from the model matrix."""
