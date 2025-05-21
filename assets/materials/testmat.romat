@@ -2,5 +2,5 @@
     "color":[0.75, 0.75, 0.75, 1],
     "texture_path":".\\assets\\textures\\container.png",
     "shader":"['base_vert_3d','base_frag_3d']",
-    "tiling_data":[999.0,999.0]
+    "tiling_data":[2.0,2.0]
 }

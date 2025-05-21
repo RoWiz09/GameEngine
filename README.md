@@ -6,8 +6,10 @@ My Python game engine
 >> Cubes
 
 > ### Components
->> Custom Scripting\
->> Colliders
+>> Custom Scripts\
+>> Colliders\
+>> Rigidbodies\
+>> Lights\
 
 ## How to use:
 Unfinished

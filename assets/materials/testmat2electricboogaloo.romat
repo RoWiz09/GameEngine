@@ -1,6 +1,6 @@
 {
-    "color":[0.75, 0.75, 0.75, 1],
-    "texture_path":".\\assets\\textures\\container.png",
+    "color":[1, 1, 1, 1],
+    "texture_path":".\\RoDevGameEngine\\base_texture.png",
     "shader":"['base_vert_3d','base_frag_3d']",
     "tiling_data":[1,1]
 }

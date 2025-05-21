@@ -31,6 +31,12 @@ class gameObject3D:
         if self.mesh:
             self.mesh.update(view_mat, proj_mat)
 
+    def update_without_components(self, view_mat : glm.mat4x4, proj_mat : glm.mat4x4, deltatime : float, gameObjects : list):
+        self.gameObjects = gameObjects
+
+        if self.mesh:
+            self.mesh.update(view_mat, proj_mat)
+
     def get_transform(self):
         return self.transform
     

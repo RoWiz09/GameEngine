@@ -3,6 +3,7 @@ from RoDevGameEngine import gameObjects
 from RoDevGameEngine import transform
 from RoDevGameEngine import material
 from RoDevGameEngine import shaders
+from RoDevGameEngine import input
 from RoDevGameEngine import light
 from RoDevGameEngine import mesh
 from json import load
@@ -18,6 +19,8 @@ class SceneManager:
         self.scene_objects : list[gameObjects.gameObject3D] = []
 
         self.materials : dict[str,material.Material] = {}
+
+        self.editor_freecam_active = False
 
         if not compiled:
             materials = self.get_materials("assets")
@@ -184,6 +187,39 @@ class SceneManager:
             objects = self.scene_objects.copy()
             objects.remove(object)
             object.update(view, projection, deltatime, objects)
+
+    def update_scene_editor(self, res : tuple):
+        if self.last_time == 0:
+            self.last_time = time.time()
+
+        cur_time = time.time()
+        deltatime = cur_time-self.last_time
+        self.last_time = cur_time
+
+        if self.editor_freecam_active:
+            mx, my = glfw.get_cursor_pos(self.window.window)
+            self.camera.process_keyboard(deltatime)
+            window_size = glfw.get_window_size(self.window.window)
+            self.camera.process_mouse_movement(mx-window_size[0]/2, -my+window_size[1]/2)
+            glfw.set_cursor_pos(self.window.window, window_size[0]/2, window_size[1]/2)
+
+        
+        if input.get_key_pressed(input.keyCodes.KEY_Z):
+            self.editor_freecam_active = not self.editor_freecam_active
+            window_size = glfw.get_window_size(self.window.window)
+            glfw.set_cursor_pos(self.window.window, window_size[0]/2, window_size[1]/2)
+
+        view = glm.lookAt(self.camera.position, self.camera.position + self.camera.front, self.camera.up)
+        projection = glm.perspective(glm.radians(self.camera.zoom), res[0] / res[1], 0.1, 16384.0)
+
+        for mat in self.materials.values():
+            mat.shader_prog.set_lights([light_ for gameobject in get_all_objects() for light_ in gameobject.get_components(light.Light)])
+
+        for object in self.scene_objects:
+            objects = self.scene_objects.copy()
+            objects.remove(object)
+            object.update_without_components(view, projection, deltatime, objects)
+
 
     def get_scenes(self, path):
         files = []

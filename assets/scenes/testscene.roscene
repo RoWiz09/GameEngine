@@ -1,8 +1,8 @@
 {
     "baseCamera":{"name":"playerCam","pos":[0,0,0],"rot":[0,0,0]},
     "3d":{
-        "testCube":{"mesh_obj":"cube","components":{"assets.scripts.BasicMovement":{"class_name":"BasicMovement","vars":[]},"RoDevGameEngine.collider":[{"class_name":"OBB","vars":["normal_collider"]}],"RoDevGameEngine.rigidbody":{"class_name":"Rigidbody","vars":[]}},"pos":[-20,50,0],"rot":[0,0,0],"scale":[5,5,1],"material":"assets\\materials\\testmat2electricboogaloo.romat"},
-        "testCube2":{"mesh_obj":"cube","components":{"RoDevGameEngine.collider":{"class_name":"OBB","vars":["normal_collider"]}},"pos":[-3,0,50],"rot":[70,90,-80],"scale":[999,999,999],"material":"assets\\materials\\testmat.romat"},
+        "testCube":{"mesh_obj":"cube","components":{"assets.scripts.BasicMovement":{"class_name":"BasicMovement","vars":[]},"RoDevGameEngine.physics.collider":[{"class_name":"OBB","vars":["normal_collider"]}],"RoDevGameEngine.physics.rigidbody":{"class_name":"Rigidbody","vars":[]}},"pos":[-20,50,0],"rot":[0,0,0],"scale":[5,5,1],"material":"assets\\materials\\testmat2electricboogaloo.romat"},
+        "testCube2":{"mesh_obj":"cube","components":{"RoDevGameEngine.physics.collider":{"class_name":"OBB","vars":["normal_collider"]}},"pos":[-3,0,50],"rot":[70,90,-80],"scale":[999,999,999],"material":"assets\\materials\\testmat.romat"},
         "light0":{"mesh_obj":"none","components":{"RoDevGameEngine.light":{"class_name":"Light", "vars":[99999]}},"pos":[3,90,3],"rot":[0,0,0],"scale":[1,1,1]}
     },
     "2d":{

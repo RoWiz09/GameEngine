@@ -8,7 +8,7 @@ class colliderTypes:
     trigger_collider = 1
 
 class OBB(script):
-    def __init__(self, parent, collider_type:colliderTypes=colliderTypes.normal_collider):
+    def __init__(self, parent, collider_type:colliderTypes=colliderTypes.normal_collider, transform:transform=None):
         super().__init__(parent)
 
         if isinstance(collider_type, str):
@@ -23,8 +23,11 @@ class OBB(script):
         self.was_touching_obb_parent = None
 
         self.parent = parent
-
-        self.parent_transform = parent.get_transform()
+        if not transform:
+            self.parent_transform = parent.get_transform()
+        else:
+            self.parent_transform = transform
+            
         center_offset = glm.vec3(0.5, 0.5, 0.5) * self.parent_transform.scale
         rotated_offset = glm.vec3(self.parent_transform.rotation_matrix * glm.vec4(center_offset, 0.0))
         self.center = self.parent_transform.pos + rotated_offset

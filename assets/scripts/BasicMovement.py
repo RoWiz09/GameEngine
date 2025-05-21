@@ -33,6 +33,6 @@ class BasicMovement(script.script):
             self.rigidbody:rigidbody.Rigidbody = self.parent.get_components(rigidbody.Rigidbody)[0]
 
         if input.get_key_pressed(input.keyCodes.KEY_SPACE):
-            self.rigidbody.apply_force(vec3(0, 50, 0))
+            self.rigidbody.apply_force(vec3(0, 999, 0))
 
         self.rigidbody.move(vel)
