@@ -35,7 +35,7 @@ class Mesh:
         GL.glBindVertexArray(0)
 
     def update(self, view_mat, proj_mat):
-        self.mat.apply(self.transform.getModelMatrix())
+        self.mat.apply(self.transform.get_model_matrix())
         self.mat.shader_prog.SetMat4x4("view", view_mat)
         self.mat.shader_prog.SetMat4x4("projection", proj_mat)
 

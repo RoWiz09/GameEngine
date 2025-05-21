@@ -4,10 +4,12 @@ import glm, RoDevGameEngine.shaders
 import PIL.Image
 
 class Material:
-    def __init__(self, color : glm.vec4, texture : PIL.Image.Image, shader_prog : RoDevGameEngine.shaders.ShaderProgram):
+    def __init__(self, color : glm.vec4, texture : PIL.Image.Image, tiling_data : list, shader_prog : RoDevGameEngine.shaders.ShaderProgram):
         self.col = color
         self.shader_prog = shader_prog
         self.img = texture
+
+        self.tiling_data = tiling_data
 
         self.tex_id = gl.glGenTextures(1)
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.tex_id)
@@ -29,3 +31,5 @@ class Material:
         self.shader_prog.Use()
         self.shader_prog.SetMat4x4("model", model)
         self.shader_prog.SetVec4("color", self.col)
+        self.shader_prog.SetVec2("tilingData", self.tiling_data)
+

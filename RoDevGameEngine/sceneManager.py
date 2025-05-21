@@ -3,6 +3,7 @@ from RoDevGameEngine import gameObjects
 from RoDevGameEngine import transform
 from RoDevGameEngine import material
 from RoDevGameEngine import shaders
+from RoDevGameEngine import light
 from RoDevGameEngine import mesh
 from json import load
 
@@ -16,25 +17,14 @@ class SceneManager:
         self.scenes = []
         self.scene_objects : list[gameObjects.gameObject3D] = []
 
-        self.materials = {}
-
-        self.light_data = [
-            {   # Light 1
-                "position": glm.vec3(3, 3, 3),
-                "color": glm.vec3(1, 1, 1),
-                "intensity": 12.0,
-                "constant": 10.0,
-                "linear": 0.09,
-                "quadratic": 0.032
-            }
-        ]
+        self.materials : dict[str,material.Material] = {}
 
         if not compiled:
             materials = self.get_materials("assets")
             for mat in materials:
                 with open(mat) as materialFile:
                     materialData = load(materialFile)
-                    self.materials[mat] = material.Material(glm.vec4(materialData["color"]),PIL.Image.open(materialData["texture_path"]),shaders.BaseShaderProgram())
+                    self.materials[mat] = material.Material(glm.vec4(materialData["color"]),PIL.Image.open(materialData["texture_path"]), materialData["tiling_data"],shaders.BaseShaderProgram())
 
             scenes = self.get_scenes("assets")
             self.scenes = scenes.copy()
@@ -52,11 +42,8 @@ class SceneManager:
             for f in inflist:
                 if f.filename.endswith(".png"):
                     ifile = zipFile.open(f)
-                    print(ifile.name)
                     img = PIL.Image.open(ifile)
                     textures[ifile.name] = img
-
-            print(textures)
 
             materials = []
             for mat in zipFile.infolist():
@@ -66,8 +53,7 @@ class SceneManager:
             for mat in materials:
                 with zipFile.open(mat) as materialFile:
                     materialData = ast.literal_eval(materialFile.read().decode())
-                    self.materials["assets\\"+mat.replace("/","\\")] = material.Material(glm.vec4(materialData["color"]), textures[materialData["texture_path"].removeprefix(".\\assets\\").replace("\\","/")],shaders.BaseShaderProgram())
-            print(self.materials)
+                    self.materials["assets\\"+mat.replace("/","\\")] = material.Material(glm.vec4(materialData["color"]), textures[materialData["texture_path"].removeprefix(".\\assets\\").replace("\\","/")], materialData["tiling_data"],shaders.BaseShaderProgram())
 
             scenes = []
             for scene in zipFile.infolist():
@@ -87,13 +73,21 @@ class SceneManager:
 
         self.last_time = 0
 
-    def get_components(self, gameObject, component_dict : dict):
+    def get_components(self, gameObject, component_dict : dict[dict[str:list]]):
         components = []
         for component in component_dict.keys():
             component_code = importlib.import_module(component)
-            components.append(getattr(component_code, component_dict[component]["class_name"])(gameObject))
+
+            if isinstance(component_dict[component], dict):
+                components.append(getattr(component_code, component_dict[component]["class_name"])(gameObject,*component_dict[component].get("vars", [])))
+            else:
+                for sub_component in range(len(component_dict[component])):
+                    components.append(getattr(component_code, component_dict[component][sub_component]["class_name"])(gameObject,*component_dict[component][sub_component].get("vars", [])))
         
         return components
+    
+    def get_gameobjects(self):
+        return self.scene_objects
 
     def load_scene(self):
         if not self.compiled:
@@ -105,9 +99,20 @@ class SceneManager:
                 for object3d in self.sceneData["3d"].keys():
                     if isinstance(self.sceneData["3d"][object3d], dict):
                         if self.sceneData["3d"][object3d]["mesh_obj"] == "cube":
-                            print("cube")
                             gameObject = gameObjects.gameObject3D(mesh.Mesh(
                                 mesh.Mesh.cube_verts, self.materials[self.sceneData["3d"][object3d]["material"]]),
+                                my_transform=transform.transform(
+                                    glm.vec3(*self.sceneData["3d"][object3d]["pos"]),
+                                    glm.vec3(*self.sceneData["3d"][object3d]["rot"]),
+                                    glm.vec3(*self.sceneData["3d"][object3d]["scale"])
+                                )
+                            )
+                            gameObject.set_components(self.get_components(gameObject, self.sceneData["3d"][object3d]['components']))
+
+                            self.scene_objects.append(gameObject)
+
+                        elif self.sceneData["3d"][object3d]["mesh_obj"] == "none":
+                            gameObject = gameObjects.gameObject3D(None,
                                 my_transform=transform.transform(
                                     glm.vec3(*self.sceneData["3d"][object3d]["pos"]),
                                     glm.vec3(*self.sceneData["3d"][object3d]["rot"]),
@@ -140,9 +145,25 @@ class SceneManager:
 
                                 self.scene_objects.append(gameObject)
 
+                            else:
+                                gameObject = gameObjects.gameObject3D(mesh.Mesh(
+                                    np.array([],dtype=np.float32), self.materials[self.sceneData["3d"][object3d]["material"]]),
+                                    my_transform=transform.transform(
+                                        glm.vec3(*self.sceneData["3d"][object3d]["pos"]),
+                                        glm.vec3(*self.sceneData["3d"][object3d]["rot"]),
+                                        glm.vec3(*self.sceneData["3d"][object3d]["scale"])
+                                    )
+                                )
+                                gameObject.set_components(self.get_components(gameObject, self.sceneData["3d"][object3d]['components']))
+
+                                self.scene_objects.append(gameObject)
+
                     sceneFile.close()
 
     def update_scene(self, res : tuple):
+        if self.last_time == 0:
+            self.last_time = time.time()
+
         cur_time = time.time()
         deltatime = cur_time-self.last_time
         self.last_time = cur_time
@@ -157,7 +178,7 @@ class SceneManager:
         projection = glm.perspective(glm.radians(self.camera.zoom), res[0] / res[1], 0.1, 16384.0)
 
         for mat in self.materials.values():
-            mat.shader_prog.set_lights(self.light_data)
+            mat.shader_prog.set_lights([light_ for gameobject in get_all_objects() for light_ in gameobject.get_components(light.Light)])
 
         for object in self.scene_objects:
             objects = self.scene_objects.copy()
@@ -189,3 +210,7 @@ def create_scene_manager(starting_scene : int, window, compiled = False):
     global sceneManager
     sceneManager = SceneManager(window, starting_scene, compiled=compiled)
     return sceneManager
+
+def get_all_objects():
+    if sceneManager:
+        return sceneManager.get_gameobjects()

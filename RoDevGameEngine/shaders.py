@@ -1,3 +1,5 @@
+from RoDevGameEngine.light import Light
+
 from OpenGL.GL import *
 import glm, numpy as np
 
@@ -56,6 +58,9 @@ class ShaderProgram():
     def Use(self):
         glUseProgram(self.program)
 
+    def set_lights(self, light_data):
+        pass
+
 class BaseShaderProgram():
     def __init__(self):
         vertexShaderSource = """
@@ -99,6 +104,7 @@ class BaseShaderProgram():
 
         uniform sampler2D texture1; // Color texture
         uniform vec3 viewPos;       // Camera position
+        uniform vec2 tilingData;
 
         // Maximum number of lights
         const int MAX_LIGHTS = 8;
@@ -146,7 +152,7 @@ class BaseShaderProgram():
             }
 
             // Apply texture color and combine with lighting
-            vec4 textureColor = texture(texture1, TexCoord);
+            vec4 textureColor = texture(texture1, TexCoord*tilingData);
             vec3 finalColor = textureColor.rgb * result;
 
             FragColor = vec4(finalColor, textureColor.a);
@@ -180,6 +186,9 @@ class BaseShaderProgram():
 
     def SetVec3(self, name, value):
         glUniform3f(glGetUniformLocation(self.program, name), *value)
+    
+    def SetVec2(self, name, value):
+        glUniform2f(glGetUniformLocation(self.program, name), *value)
 
     def SetVec4(self, name, value : glm.vec4):
         glUniform4f(glGetUniformLocation(self.program, name), *value)
@@ -190,19 +199,19 @@ class BaseShaderProgram():
     def SetFloat(self, name, value):
         glUniform1f(glGetUniformLocation(self.program, name), value)
 
-    def set_lights(self, light_data):
+    def set_lights(self, light_data:list[Light]):
         # Number of active lights
         num_lights = 1
         glUniform1i(glGetUniformLocation(self.program, "numLights"), num_lights)
 
         # Set light data in the shader
         for i, light in enumerate(light_data):
-            glUniform3f(glGetUniformLocation(self.program, f"pointLights[{i}].position"), *light["position"])
-            glUniform3f(glGetUniformLocation(self.program, f"pointLights[{i}].color"), *light["color"])
-            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].intensity"), light["intensity"])
-            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].constant"), light["constant"])
-            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].linear"), light["linear"])
-            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].quadratic"), light["quadratic"])
+            glUniform3f(glGetUniformLocation(self.program, f"pointLights[{i}].position"), *light.pos)
+            glUniform3f(glGetUniformLocation(self.program, f"pointLights[{i}].color"), *light.color)
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].intensity"), light.intensity)
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].constant"), light.constant)
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].linear"), light.linear)
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].quadratic"), light.quadratic)
 
     def Use(self):
         glUseProgram(self.program)

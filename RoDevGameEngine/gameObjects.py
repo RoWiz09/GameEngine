@@ -1,33 +1,46 @@
+from RoDevGameEngine.physics.collider import OBB, colliderTypes
+from RoDevGameEngine.physics.rigidbody import Rigidbody
+from RoDevGameEngine.transform import transform
+from RoDevGameEngine.mesh import Mesh
 import glm, numpy as np, keyboard
 import OpenGL.GL as GL
-from RoDevGameEngine.mesh import Mesh
-from RoDevGameEngine.collider import OBB
-from RoDevGameEngine.transform import transform
     
 class gameObject3D:
-    def __init__(self, mesh : Mesh, my_transform : transform = transform(glm.vec3(0,0,0),glm.vec3(0,0,0),glm.vec3(1,1,1))):    
+    def __init__(self, mesh : Mesh, my_transform : transform = transform(glm.vec3(0,0,0),glm.vec3(0,0,0),glm.vec3(1,1,1))):   
+        # Transform data 
         self.transform = my_transform
-        mesh.transform = my_transform
-        self.OBB = OBB(my_transform)
-        self.components = []
+        if mesh:
+            mesh.transform = my_transform
+        
+        from RoDevGameEngine.script import script
+
+        self.components : list[script] = []
+
         self.mesh = mesh
 
     def set_components(self, my_components : list):
-        self.components = my_components
+        self.components.extend(my_components)
 
     def update(self, view_mat : glm.mat4x4, proj_mat : glm.mat4x4, deltatime : float, gameObjects : list):
-        self.mesh.update(view_mat, proj_mat)
-
-        for gameObject in gameObjects:
-            if self.OBB.intersects(gameObject.OBB):
-                print("test")
+        self.gameObjects = gameObjects
 
         if self.components:
             for component in self.components:
                 component.update(deltatime)
 
+        if self.mesh:
+            self.mesh.update(view_mat, proj_mat)
+
     def get_transform(self):
         return self.transform
+    
+    def get_components(self, component_class):
+        components = []
+        for component in self.components:
+            if isinstance(component, component_class):
+                components.append(component)
+
+        return components
 
 class camera:
     """
