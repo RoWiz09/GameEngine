@@ -232,9 +232,9 @@ class window:
                         imgui.spacing()
                         imgui.spacing()
                         imgui.text(type(component).__name__)
-                        
+
                         imgui.same_line()
-                        component.set_active(imgui.checkbox("Active:", component.get_active())[1])
+                        component.set_active(imgui.checkbox("Active:", component.get_active)[1])
 
                         imgui.spacing()
 

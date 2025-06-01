@@ -37,7 +37,7 @@ class gameObject3D:
 
             if self.components:
                 for component in self.components:
-                    if component.get_active():
+                    if component.get_active:
                         component.update(deltatime)
 
             if self.mesh:
@@ -53,7 +53,7 @@ class gameObject3D:
             if self.components:
                 for component in self.components:
                     if component._always_run:
-                        if component.get_active():
+                        if component.get_active:
                             component.update(deltatime)
 
     def get_transform(self):

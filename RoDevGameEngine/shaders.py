@@ -203,7 +203,7 @@ class BaseShaderProgram():
         light_data = []
 
         for light in light_data_tmp:
-            if light.get_active() and light.parent.get_active():
+            if light.get_active and light.parent.get_active():
                 light_data.append(light)
 
         # Number of active lights
