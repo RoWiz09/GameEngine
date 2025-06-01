@@ -13,3 +13,10 @@ My Python game engine
 
 ## How to use:
 Unfinished
+
+## Libraries
+> GLFW -> Window
+> pyOpenGL -> Rendering
+> glm -> Helps with rendering
+> 
+> Imgui -> Editor UI

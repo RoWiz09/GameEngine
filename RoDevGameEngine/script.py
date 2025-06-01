@@ -1,12 +1,17 @@
 from typing_extensions import deprecated
 
 class script:
-    def __init__(self, parent):
+    def __init__(self, parent, script_path:str):
+        self._path = script_path
+
+        self._always_run = False 
         from RoDevGameEngine.gameObjects import gameObject3D
         if isinstance(parent, gameObject3D):
             self.parent = parent
         else:
             raise self.InvalidParentError("The parent value must be of type GameObject3D. This is most likely our fault, but possibly yours if you edited the scenefile manually.")
+        
+        self.__enabled = True
 
     class InvalidParentError(Exception):
         def __init__(self, *args):
@@ -20,6 +25,14 @@ class script:
     def OBB(self):
         from RoDevGameEngine.physics.collider import OBB
         return OBB
+    
+    @property
+    def get_active(self):
+        return self.__enabled
+    
+    def set_active(self, state:bool):
+        if isinstance(state, bool):
+            self.__enabled = state
     
     def on_scene_unload(self):
         pass

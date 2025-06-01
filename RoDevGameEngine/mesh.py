@@ -41,8 +41,9 @@ class Mesh:
 
         GL.glBindVertexArray(self.vao)
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.verticies)
-
-    cube_verts = np.array([
+    
+    def cube_verts():
+        return np.array([
             # Face y+ (Top)
             1.0, 1.0, 0.0,   1.0, 0.0,  0.0, 1.0, 0.0,  # Bottom-right
             0.0, 1.0, 0.0,   0.0, 0.0,  0.0, 1.0, 0.0,  # Bottom-left
@@ -98,4 +99,36 @@ class Mesh:
             0.0, 1.0, 0.0,   1.0, 0.0,  0.0, 0.0, -1.0,  # Bottom-right
 
         ], dtype=np.float32)
+    
+    def cylinder_verts(faces):
+        deg_added = 360 / faces
+        deg = 0
 
+        verticies = []
+        for side in range(faces):
+            radians = deg * (np.pi/180)
+            radians_added = (deg+deg_added) * (np.pi/180)
+
+            verticies.extend([
+                np.cos(radians)*1+0.5, 0, np.sin(radians)*1+0.5, 1.0, deg/360*2, # Bottom Left
+                np.cos(radians)*1+0.5, 1, np.sin(radians)*1+0.5, 0.0, deg/360*2, # Top Left
+                np.cos(radians_added)*1+0.5, 1, np.sin(radians_added)*1+0.5, 0.0, (deg+deg_added)/360*2, # Top Right
+
+                np.cos(radians_added)*1+0.5, 1, np.sin(radians_added)*1+0.5, 0.0, (deg+deg_added)/360*2,  # Top Right
+                np.cos(radians_added)*1+0.5, 0, np.sin(radians_added)*1+0.5, 1.0, (deg+deg_added)/360*2, # Bottom Right
+                np.cos(radians)*1+0.5, 0, np.sin(radians)*1+0.5, 1.0, deg/360*2, # Bottom Left
+
+                # Top Face
+                np.cos(radians)*1+0.5, 1, np.sin(radians)*1+0.5, 0, 0, 
+                0.5, 1, 0.5, 0.5, 0.5, 
+                np.cos(radians_added)*1+0.5, 1, np.sin(radians_added)*1+0.5, 0, 1, 
+
+                # Bottom Face
+                np.cos(radians_added)*1+0.5, 0, np.sin(radians_added)*1+0.5, 0, 1, 
+                0.5, 0, 0.5, 0.5, 0.5, 
+                np.cos(radians)*1+0.5, 0, np.sin(radians)*1+0.5, 0, 0, 
+            ])
+
+            deg += deg_added
+
+        return np.array(verticies, dtype=np.float32)

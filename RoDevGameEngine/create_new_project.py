@@ -9,6 +9,9 @@ class Project:
         if not os.path.isdir("C:\\RoDevGameEngine\\Projects\\"):
             os.mkdir("C:\\RoDevGameEngine\\Projects\\")
 
+        if os.path.isdir("C:\\RoDevGameEngine\\Projects\\%s"%project_name):
+            raise Exception()
+
         os.mkdir("C:\\RoDevGameEngine\\Projects\\%s"%project_name)
 
         shutil.copytree("C:\\RoDevGameEngine\\RoDevGameEngine", "C:\\RoDevGameEngine\\Projects\\%s\\Engine"%project_name)

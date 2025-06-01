@@ -4,10 +4,12 @@ import glm, RoDevGameEngine.shaders
 import PIL.Image
 
 class Material:
-    def __init__(self, color : glm.vec4, texture : PIL.Image.Image, tiling_data : list, shader_prog : RoDevGameEngine.shaders.ShaderProgram):
+    def __init__(self, color : glm.vec4, texture : PIL.Image.Image, tex_path, tiling_data : list, shader_prog : RoDevGameEngine.shaders.ShaderProgram):
         self.col = color
         self.shader_prog = shader_prog
+
         self.img = texture
+        self.__img_path = texture.filename
 
         self.tiling_data = tiling_data
 
@@ -24,6 +26,16 @@ class Material:
         tex_data = np.array(list(texture.getdata()),np.int16)
         gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, texture.size[0], texture.size[1], 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, tex_data)
        
+    def apply_lighting(self, lights):
+        self.shader_prog.Use()
+        self.shader_prog.set_lights(lights)
+
+    def check_texture_equal(self, path):
+        print(self.__img_path == path)
+        if self.__img_path == path:
+            return self.tex_id
+        
+        return False
 
     def apply(self, model : glm.mat4x4):
         gl.glBindTexture(gl.GL_TEXTURE_2D, self.tex_id)

@@ -1,18 +1,29 @@
 from RoDevGameEngine.physics.collider import OBB
+from RoDevGameEngine import sceneManager
+from RoDevGameEngine.gizmos.line import Line
 from RoDevGameEngine.transform import transform
 from RoDevGameEngine.sceneManager import get_all_objects
 import glm
 
-def raycast(pos: glm.vec3, distance: float, rot: glm.vec3):
+class RaycastHit:
+    def __init__(self, hit_pos, hit_object):
+        self.pos = hit_pos
+        self.hit = hit_object
+
+def raycast(pos: glm.vec3, distance: float, rot: glm.vec3, ignored_obbs:list[OBB]=None):
     direction = glm.normalize(rot)  # Ensure it's a unit direction
+    end_point = pos + direction * distance
 
     for obj in get_all_objects():
         for obb in obj.get_components(OBB):
-            hit = ray_intersects_obb(pos, direction, obb, distance)
-            if hit:
-                return True
+            if obb not in ignored_obbs:
+                hit = ray_intersects_obb(pos, direction, obb, distance)
+                if hit:
+                    sceneManager.sceneManager.line_renderer.add_line(Line(pos, hit.pos, glm.vec4(1, 1, 0, 1)))
+                    return hit
 
-    return False
+    sceneManager.sceneManager.line_renderer.add_line(Line(pos, end_point, glm.vec4(1, 0, 0, 1)))
+    return None
 
 def ray_intersects_obb(ray_origin, ray_dir, obb, max_distance):
     center = obb.center
@@ -37,10 +48,14 @@ def ray_intersects_obb(ray_origin, ray_dir, obb, max_distance):
             t_max = min(t_max, t2)
 
             if t_min > t_max:
-                return False  # No intersection
+                return None  # No intersection
         else:
-            # Ray is parallel to slab. No hit if origin not within slab
             if -e - half_sizes[i] > 0 or -e + half_sizes[i] < 0:
-                return False
+                return None  # Ray is parallel and outside the slab
 
-    return True
+    hit_distance = t_min if t_min >= 0 else t_max
+    if 0 <= hit_distance <= max_distance:
+        hit_point = ray_origin + ray_dir * hit_distance
+        return RaycastHit(hit_point, obb.parent)
+
+    return None

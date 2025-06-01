@@ -199,19 +199,116 @@ class BaseShaderProgram():
     def SetFloat(self, name, value):
         glUniform1f(glGetUniformLocation(self.program, name), value)
 
-    def set_lights(self, light_data:list[Light]):
+    def set_lights(self, light_data_tmp:list[Light]):
+        light_data = []
+
+        for light in light_data_tmp:
+            if light.get_active() and light.parent.get_active():
+                light_data.append(light)
+
         # Number of active lights
-        num_lights = 1
+        num_lights = len(light_data)
         glUniform1i(glGetUniformLocation(self.program, "numLights"), num_lights)
 
         # Set light data in the shader
         for i, light in enumerate(light_data):
-            glUniform3f(glGetUniformLocation(self.program, f"pointLights[{i}].position"), *light.pos)
+            glUniform3f(glGetUniformLocation(self.program, f"pointLights[{i}].position"), *light._pos)
             glUniform3f(glGetUniformLocation(self.program, f"pointLights[{i}].color"), *light.color)
-            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].intensity"), light.intensity)
-            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].constant"), light.constant)
-            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].linear"), light.linear)
-            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].quadratic"), light.quadratic)
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].intensity"), light._intensity)
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].constant"), light._constant)
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].linear"), light._linear)
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].quadratic"), light._quadratic)
+
+    def Use(self):
+        glUseProgram(self.program)
+
+class RayShaderProgram():
+    def __init__(self):
+        vertexShaderSource = """
+            #version 330 core
+            layout (location = 0) in vec3 aPos;
+
+            uniform mat4 uProjection;
+            uniform mat4 uView;
+
+            void main()
+            {
+                gl_Position = uProjection * uView * vec4(aPos, 1.0);
+            }
+        """
+
+        vertexShader = glCreateShader(GL_VERTEX_SHADER)
+        glShaderSource(vertexShader, vertexShaderSource)
+        glCompileShader(vertexShader)
+
+        if glGetShaderiv(vertexShader, GL_COMPILE_STATUS) != GL_TRUE:
+            raise RuntimeError(glGetShaderInfoLog(vertexShader))
+
+        fragmentShaderSource = """
+        #version 330 core
+        out vec4 FragColor;
+
+        uniform vec4 uColor;
+
+        void main()
+        {
+            FragColor = uColor;
+        }
+        """
+
+        fragmentShader = glCreateShader(GL_FRAGMENT_SHADER)
+        glShaderSource(fragmentShader, fragmentShaderSource)
+        glCompileShader(fragmentShader)
+
+        if glGetShaderiv(fragmentShader, GL_COMPILE_STATUS) != GL_TRUE:
+            raise RuntimeError(glGetShaderInfoLog(fragmentShader))
+
+        shader_prog = glCreateProgram()
+        glAttachShader(shader_prog, vertexShader)
+        glAttachShader(shader_prog, fragmentShader)
+        glLinkProgram(shader_prog)
+
+        if glGetProgramiv(shader_prog, GL_LINK_STATUS) != GL_TRUE:
+            raise RuntimeError(glGetProgramInfoLog(shader_prog))
+
+        glUseProgram(shader_prog)
+
+        glDeleteShader(vertexShader)
+        glDeleteShader(fragmentShader)
+
+        self.program = shader_prog
+
+    def SetMat4x4(self, name, matrix):
+        glUniformMatrix4fv(glGetUniformLocation(self.program, name), 1, GL_FALSE, glm.value_ptr(matrix))
+
+    def SetVec3(self, name, value):
+        glUniform3f(glGetUniformLocation(self.program, name), *value)
+    
+    def SetVec2(self, name, value):
+        glUniform2f(glGetUniformLocation(self.program, name), *value)
+
+    def SetVec4(self, name, value : glm.vec4):
+        glUniform4f(glGetUniformLocation(self.program, name), *value)
+
+    def SetInt(self, name, value):
+        glUniform1i(glGetUniformLocation(self.program, name), value)
+
+    def SetFloat(self, name, value):
+        glUniform1f(glGetUniformLocation(self.program, name), value)
+
+    def set_lights(self, light_data:list[Light]):
+        # Number of active lights
+        num_lights = len(light_data)
+        glUniform1i(glGetUniformLocation(self.program, "numLights"), num_lights)
+
+        # Set light data in the shader
+        for i, light in enumerate(light_data):
+            glUniform3f(glGetUniformLocation(self.program, f"pointLights[{i}].position"), *light._pos)
+            glUniform3f(glGetUniformLocation(self.program, f"pointLights[{i}].color"), *light.color)
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].intensity"), light._intensity)
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].constant"), light._constant)
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].linear"), light._linear)
+            glUniform1f(glGetUniformLocation(self.program, f"pointLights[{i}].quadratic"), light._quadratic)
 
     def Use(self):
         glUseProgram(self.program)

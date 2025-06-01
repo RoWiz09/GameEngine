@@ -8,38 +8,26 @@ class colliderTypes:
     trigger_collider = 1
 
 class OBB(script):
-    def __init__(self, parent, collider_type:colliderTypes=colliderTypes.normal_collider, transform:transform=None):
-        super().__init__(parent)
+    def __init__(self, parent, script_path):
+        super().__init__(parent, script_path)
 
-        if isinstance(collider_type, str):
-            self.collider_type = colliderTypes.__getattribute__(colliderTypes,collider_type)
-        else:
-            self.collider_type = collider_type
-
-        self.is_touching = False
-        self.was_touching = False
-
-        self.is_touching_obb_parent = None
-        self.was_touching_obb_parent = None
+        self.collider_type = colliderTypes.normal_collider
 
         self.parent = parent
-        if not transform:
-            self.parent_transform = parent.get_transform()
-        else:
-            self.parent_transform = transform
-            
-        center_offset = glm.vec3(0.5, 0.5, 0.5) * self.parent_transform.scale
-        rotated_offset = glm.vec3(self.parent_transform.rotation_matrix * glm.vec4(center_offset, 0.0))
-        self.center = self.parent_transform.pos + rotated_offset
-        self.size = self.parent_transform.scale * 0.5  # Treat size as full size, store half-extents
-        self.rotation = glm.mat3(self.parent_transform.rotation_matrix)  # Convert to 3x3 for local axes
+        self.__parent_transform = parent.get_transform()
+
+        self.offset = glm.vec3(0.5, 0.5, 0.5)
+        rotated_offset = glm.vec3(self.__parent_transform.rotation_matrix * glm.vec4(self.offset * self.__parent_transform.scale, 0.0))
+        self.center = self.__parent_transform.pos + rotated_offset
+        self.size = self.__parent_transform.scale * 0.5  # Treat size as full size, store half-extents
+        self.__rotation = glm.mat3(self.__parent_transform.rotation_matrix)  # Convert to 3x3 for local axes
 
     def get_axes(self):
         # Return the 3 local axes of the OBB (right, up, forward)
         return [
-            glm.vec3(self.rotation[0]),  # X-axis (right)
-            glm.vec3(self.rotation[1]),  # Y-axis (up)
-            glm.vec3(self.rotation[2])   # Z-axis (forward)
+            glm.vec3(self.__rotation[0]),  # X-axis (right)
+            glm.vec3(self.__rotation[1]),  # Y-axis (up)
+            glm.vec3(self.__rotation[2])   # Z-axis (forward)
         ]
 
     def project_onto_axis(self, axis: glm.vec3) -> float:
@@ -51,7 +39,7 @@ class OBB(script):
         """Returns (True, collision_info) if colliding, otherwise (False, None)."""
         axes_a = self.get_axes()
         axes_b = other.get_axes()
-        relative_center = other.center - self.center
+        relative_center = glm.vec3(other.center) - glm.vec3(self.center)
 
         test_axes = axes_a + axes_b + [glm.cross(a, b) for a in axes_a for b in axes_b]
 
@@ -89,14 +77,10 @@ class OBB(script):
         return True, collision_info
 
     def update(self, deltatime):
-        offset = glm.vec3(0.5, 0.5, 0.5) * self.parent_transform.scale
-        rotated_offset = glm.vec3(self.parent_transform.rotation_matrix * glm.vec4(offset, 0.0))
-        self.center = self.parent_transform.pos + rotated_offset
-        super().update(deltatime)
+        offset = self.offset * self.__parent_transform.scale
+        rotated_offset = glm.vec3(self.__parent_transform.rotation_matrix * glm.vec4(offset, 0.0))
+        self.center = self.__parent_transform.pos + rotated_offset
 
-        self.was_touching = self.is_touching
-        self.is_touching = False
-
-        self.was_touching_obb_parent = self.is_touching_obb_parent
-        self.is_touching_obb_parent = False
-        
+        if isinstance(self.collider_type, str):
+            self.collider_type = colliderTypes.__getattribute__(colliderTypes, self.collider_type)
+        super().update(deltatime)  

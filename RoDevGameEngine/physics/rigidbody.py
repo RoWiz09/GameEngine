@@ -14,40 +14,40 @@ class RigidbodyConstraints(script.dataContainer):
         return globals()[constraint]
 
 class Rigidbody(script.script):
-    def __init__(self, parent, max_step_size=1, max_slope_angle=45, gravity:float=0.1):
+    def __init__(self, parent, script_path, max_step_size=1, max_slope_angle=45, gravity:float=0.1):
         from RoDevGameEngine.gameObjects import gameObject3D
         from RoDevGameEngine.sceneManager import get_all_objects
 
         self.get_objects = get_all_objects
 
-        super().__init__(parent)
+        super().__init__(parent, script_path)
         self.parent = None
         if isinstance(parent, gameObject3D):
             self.parent = parent
-        self.transform = self.parent.get_transform()
+        self.__transform = self.parent.get_transform()
 
-        self.gameObjects = []
+        self.__gameObjects = []
 
-        self.air_time = 0
-        self.grounded = False
+        self.__air_time = 0
+        self.__grounded = False
         self.gravity = gravity
-        self.has_gravitied_this_frame = False
+        self.__has_gravitied_this_frame = False
 
-        self.cur_force = vec3(0,0,0)
-        self.friction = 100
+        self.__cur_force = vec3(0,0,0)
+        self.__friction = 100
 
-        self.colliding = False
-        self.was_colliding = False
+        self.__colliding = False
+        self.__was_colliding = False
 
-        self.triggering = False 
-        self.was_triggering = False
+        self.__triggering = False 
+        self.__was_triggering = False
 
-        self.OBB : list[OBB] = None
+        self.__OBB : list[OBB] = None
 
-        self.constraints = RigidbodyConstraints()
-        self.constraints.set_constraint("gravity", True)
+        self.__constraints = RigidbodyConstraints()
+        self.__constraints.set_constraint("gravity", True)
 
-        self.trying_to_move = False
+        self.__trying_to_move = False
 
         self.max_slope_angle = max_slope_angle
         self.max_step_size = max_step_size
@@ -55,31 +55,31 @@ class Rigidbody(script.script):
     def update(self, deltatime):
         from RoDevGameEngine.sceneManager import get_all_objects
         super().update(deltatime)
-        self.gameObjects = get_all_objects()
-        self.OBB : list[OBB] = self.parent.get_components(OBB)
+        self.__gameObjects = get_all_objects()
+        self.__OBB : list[OBB] = self.parent.get_components(OBB)
 
-        if not self.grounded and self.constraints.get_constraint("gravity") and not self.has_gravitied_this_frame and self.cur_force.y <= 0:
-            self.has_gravitied_this_frame = True
-            self.move_gravity([0, -self.gravity*self.air_time*deltatime, 0])
-            self.air_time += 1
+        if not self.__grounded and self.__constraints.get_constraint("gravity") and not self.__has_gravitied_this_frame and self.__cur_force.y <= 0:
+            self.__has_gravitied_this_frame = True
+            self.move_gravity([0, -self.gravity*self.__air_time*deltatime, 0])
+            self.__air_time += 1
 
-        if self.cur_force:
-            if any((self.cur_force.x > 0, self.cur_force.y > 0, self.cur_force.z > 0)):
-                self.transform.move(self.cur_force*deltatime)
+        if self.__cur_force:
+            if any((self.__cur_force.x > 0, self.__cur_force.y > 0, self.__cur_force.z > 0)):
+                self.__transform.move(self.__cur_force*deltatime)
             else:
-                self.cur_force = vec3(0,0,0)
+                self.__cur_force = vec3(0,0,0)
 
-            if self.cur_force.x > 0:
-                self.cur_force.x -= self.friction/100
+            if self.__cur_force.x > 0:
+                self.__cur_force.x -= self.__friction/100
 
-            if self.cur_force.y > 0:
-                self.cur_force.y -= (self.gravity*self.air_time+self.friction)/1000
+            if self.__cur_force.y > 0:
+                self.__cur_force.y -= (self.gravity*self.__air_time+self.__friction)/1000
 
-            if self.cur_force.z > 0:
-                self.cur_force.z -= self.friction/100
+            if self.__cur_force.z > 0:
+                self.__cur_force.z -= self.__friction/100
 
-        for obb in self.OBB:
-            for gameObject in self.gameObjects:
+        for obb in self.__OBB:
+            for gameObject in self.__gameObjects:
                 for other_obb in gameObject.get_components(OBB):
                     if other_obb.parent != self.parent:
                         collision_data = obb.is_colliding_with(other_obb)
@@ -93,36 +93,34 @@ class Rigidbody(script.script):
                                         script_comp.on_collision_enter(self, other_obb, collision_info)
 
                             elif obb.collider_type == colliderTypes.trigger_collider:
-                                self.triggering = True
+                                self.__triggering = True
 
-                                if self.triggering and not self.was_triggering:
+                                if self.__triggering and not self.__was_triggering:
                                     for script_comp in self.parent.components:
                                         if hasattr(script_comp, 'on_trigger_enter'):
                                             script_comp.on_trigger_enter(self, other_obb)
 
-                                elif self.triggering and self.was_triggering:
+                                elif self.__triggering and self.__was_triggering:
                                     for script_comp in self.parent.components:
                                         if hasattr(script_comp, 'while_trigger'):
                                             script_comp.while_trigger(self, other_obb)
 
-                                elif not self.triggering and self.was_triggering:
+                                elif not self.__triggering and self.__was_triggering:
                                     for script_comp in self.parent.components:
                                         if hasattr(script_comp, 'on_trigger_exit'):
                                             script_comp.on_trigger_exit(self, other_obb)
 
-        if not self.colliding and self.grounded and self.constraints.get_constraint("gravity"):
+        if not self.__colliding and self.__grounded and self.__constraints.get_constraint("gravity"):
             self.has_gravitied_this_frame = True
             self.grounded = False
-            self.air_time += 1
+            self.__air_time += 1
 
-        self.was_colliding = self.colliding
-        self.colliding = False
+        self.__colliding = False
 
-        self.was_triggering = self.triggering
-        self.triggering = False
+        self.__was_triggering = self.__triggering
+        self.__triggering = False
 
-        self.has_gravitied_this_frame = False
-        self.trying_to_move = False
+        self.__has_gravitied_this_frame = False
 
     def is_ground_normal(self, normal):
         from math import degrees, acos
@@ -132,22 +130,22 @@ class Rigidbody(script.script):
     def move(self, vel:list):
         self.trying_to_move = True
 
-        self.transform.move(vec3(*vel))
+        self.__transform.move(vec3(*vel))
 
         self.update(0)
 
         self.trying_to_move = False
 
     def move_gravity(self, vel:list):
-        self.transform.move(vec3(*vel))
+        self.__transform.move(vec3(*vel))
         
     def apply_force(self, force:vec3):
-        self.cur_force += force
+        self.__cur_force = force
 
     def on_collision_enter(self, my_obb, other, collision_info=None):
         if collision_info:
             self.grounded = True
-            self.air_time = 0
+            self.__air_time = 0
 
             normal = -collision_info["normal"]
             depth = collision_info["penetration_depth"]
@@ -155,12 +153,12 @@ class Rigidbody(script.script):
             if not self.is_ground_normal(normal) or depth>self.max_step_size:
                 correction = normal * depth
 
-                self.transform.move(correction)
+                self.__transform.move(correction)
             
-                self.cur_force = vec3(0,0,0)
+                self.__cur_force = vec3(0,0,0)
 
             else:
-                correction = vec3(0, normal.y, 0) * depth * 0.9
+                correction = vec3(0, normal.y, 0) * depth * 0.4
 
-                self.transform.move(correction)
+                self.__transform.move(correction)
 
