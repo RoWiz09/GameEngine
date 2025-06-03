@@ -1,5 +1,6 @@
 import subprocess, os
 from RoDevGameEngine import zipper
+from RoDevGameEngine import get_glfw_bin
 from json import load
 
 def build(project_name : str):
@@ -31,7 +32,7 @@ def build(project_name : str):
 
     print(hidden_import_command)
 
-    subprocess.run("pyinstaller --noconfirm %s --add-binary=C:\\Users\\s56240\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\glfw\\glfw3.dll:glfw %s.py" % (hidden_import_command,project_name))
+    subprocess.run("pyinstaller --noconfirm %s --add-binary=%s:glfw %s.py" % (hidden_import_command, get_glfw_bin.get_glfw_bin()[0][0],project_name+".py"))
 
     zipper.zipFolder()
 
