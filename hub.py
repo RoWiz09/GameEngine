@@ -21,7 +21,7 @@ if not glfw.init():
     raise Exception("GLFW initialization failed")
 
 # Create a windowed mode window and its OpenGL context
-window = glfw.create_window(800, 600, "GLFW PyOpenGL Window", None, None)
+window = glfw.create_window(800, 600, "The RoDevGameEngine Hub", None, None)
 if not window:
     glfw.terminate()
     raise Exception("Failed to create GLFW window")
@@ -54,7 +54,7 @@ class USE_LATEST_ENGINE_VERSION(Enum):
     NO = 1
 
 import requests
-import shutil
+import zipfile
 
 def get_all_releases():
     url = f"https://api.github.com/repos/RoWiz09/Autoflipper/releases"
@@ -189,10 +189,13 @@ def create_proj(project_name:str, engine_version_download_url:str):
         raise Exception(f"Failed to download engine. Status code: {response.status_code}")
 
     # Extract the zip file directly into the project folder
-    shutil.unpack_archive(zip_path, engine_folder)
-
-    # Remove the zip file after extraction
-    os.remove(zip_path)
+    with zipfile.ZipFile(zip_path) as zipFile:
+        for file in zipFile.filelist:
+            if not file.is_dir():
+                with zipFile.open(file) as zip_file:
+                    with open("C:\\RoDevGameEngine\\Projects\\%s\\engine\\%s" % (project_name, "/".join(zip_file.name.split("/")[1:])), 'w') as extracted_file:
+                        extracted_file.write(zip_file.read().decode())
+                        print(zip_file.read().decode())
 
 list_of_releases = get_all_releases()
 
