@@ -77,6 +77,7 @@ username_last_frame = ACCOUNT_DATA["username"]
 last_project_name = ""
 
 last_selected_engine_version = 0
+projects = []
 
 def create_proj(project_name:str, engine_version_download_url:str):
     if not os.path.isdir("C:\\RoDevGameEngine\\Projects\\"):
@@ -199,6 +200,12 @@ def create_proj(project_name:str, engine_version_download_url:str):
 
 list_of_releases = get_all_releases()
 
+def get_projects():
+    global projects
+
+    for directory in os.listdir("C:\\RoDevGameEngine\\Projects"):
+        if os.path.isfile("C:\\RoDevGameEngine\\Projects\\%s\\.roproj"):
+
 def update(window):
     global cur_menu, editing_account, username_last_frame, last_project_name, list_of_releases, last_selected_engine_version
 
@@ -227,7 +234,9 @@ def update(window):
 
     if cur_menu == Menu.PROJECTS:
         imgui.text("Projects Menu")
-        imgui.text("List of projects will be displayed here.")
+        with imgui.begin_child():
+            for project in 
+            imgui.button("")
         if imgui.button("Create New Project"):
             cur_menu = Menu.CREATE_PROJECT_MENU
 
