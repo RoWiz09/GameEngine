@@ -88,46 +88,43 @@ def create_proj(project_name:str, engine_version_download_url:str):
 
     os.mkdir("C:\\RoDevGameEngine\\Projects\\%s"%project_name)
 
-    with open("C:\\RoDevGameEngine\\Projects\\%s\\%s.py"%(project_name,project_name), "w") as project_file:
+    with open("C:\\RoDevGameEngine\\Projects\\%s\\main.py"%(project_name), "w") as project_file:
         project_file.write("""
-            import argparse
-            from enum import Enum
+import argparse
+from enum import Enum
 
-            parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser()
 
-            class BootState(Enum):
-                EDIT = "Edit"
-                BUILD = "Build"
-                PLAY = "Play"
+class BootState(Enum):
+    EDIT = "Edit"
+    BUILD = "Build"
+    PLAY = "Play"
 
-            parser.add_argument('--boot-state', type=str, choices=[state.value for state in BootState], default=BootState.EDIT.value, help='Boot state of the game engine', required=True)
+parser.add_argument('--boot-state', type=str, choices=[state.value for state in BootState], default=BootState.EDIT.value, help='Boot state of the game engine', required=True)
 
-            args = parser.parse_args()
+args = parser.parse_args()
 
-            if args.boot_state == BootState.EDIT.value:
-                from RoDevGameEngine import editor_window
-                from json import load
+if args.boot_state == BootState.EDIT.value:
+    from RoDevGameEngine import editor_window
+    from json import load
 
-                projectData = load(open(".assets\\main.json"))
+    projectData = load(open(".assets\\main.json"))
 
-                game_window = editor_window.window(projectData['projectName'], starting_scene=projectData["startingScene"], compiled=projectData.get("compiled"))
-                game_window.start_update_loop()
+    game_window = editor_window.window(projectData['projectName'], starting_scene=projectData["startingScene"], compiled=projectData.get("compiled"))
+    game_window.start_update_loop()
 
-            elif args.boot_state == BootState.BUILD.value:
-                pass
+elif args.boot_state == BootState.BUILD.value:
+    pass
 
-            elif args.boot_state == BootState.PLAY.value:
-                from RoDevGameEngine import window as game_window
-                from json import load
+elif args.boot_state == BootState.PLAY.value:
+    from RoDevGameEngine import window as game_window
+    from json import load
 
-                projectData = load(open(".assets\\main.json"))
+    projectData = load(open(".assets\\main.json"))
 
-                game_window = game_window.window(projectData['projectName'], starting_scene=projectData["startingScene"], compiled=projectData.get("compiled"))
-                game_window.start_update_loop()
-
-        """)
-
-        project_file.close()
+    game_window = game_window.window(projectData['projectName'], starting_scene=projectData["startingScene"], compiled=projectData.get("compiled"))
+    game_window.start_update_loop()
+""")
 
     os.mkdir("C:\\RoDevGameEngine\\Projects\\%s\\assets"%project_name)
 
@@ -176,11 +173,11 @@ def create_proj(project_name:str, engine_version_download_url:str):
     os.mkdir("C:\\RoDevGameEngine\\Projects\\%s\\assets\\textures"%project_name)
 
     # Download and extract the engine
-    engine_folder = "C:\\RoDevGameEngine\\Projects\\%s\\engine" % project_name
+    engine_folder = "C:\\RoDevGameEngine\\Projects\\%s\\" % project_name
     os.mkdir(engine_folder)
 
     # Download the engine zip file
-    zip_path = os.path.join("C:\\RoDevGameEngine\\Projects\\%s\\engine\\engine.zip" % project_name)
+    zip_path = os.path.join("C:\\RoDevGameEngine\\Projects\\%s\\engine.zip" % project_name)
     response = requests.get(engine_version_download_url, stream=True)
     if response.status_code == 200:
         with open(zip_path, 'wb') as zip_file:
@@ -191,12 +188,19 @@ def create_proj(project_name:str, engine_version_download_url:str):
 
     # Extract the zip file directly into the project folder
     with zipfile.ZipFile(zip_path) as zipFile:
-        for file in zipFile.filelist:
-            if not file.is_dir():
-                with zipFile.open(file) as zip_file:
-                    with open("C:\\RoDevGameEngine\\Projects\\%s\\engine\\%s" % (project_name, "/".join(zip_file.name.split("/")[1:])), 'w') as extracted_file:
-                        extracted_file.write(zip_file.read().decode())
-                        print(zip_file.read().decode())
+        zipFile.extractall(engine_folder)
+    
+    with open("C:\\RoDevGameEngine\\Projects\\%s\\.roproj" % project_name, "w") as roproj_file:
+        roproj_file.write("""
+            {
+                "projectName": "%s",
+                "engineVersion": "%s"
+            }
+        """ % (project_name, engine_version_download_url.split("/")[-1]))
+        roproj_file.close()
+
+    # Remove the downloaded zip file
+    os.remove(zip_path)
 
 list_of_releases = get_all_releases()
 
@@ -204,7 +208,14 @@ def get_projects():
     global projects
 
     for directory in os.listdir("C:\\RoDevGameEngine\\Projects"):
-        if os.path.isfile("C:\\RoDevGameEngine\\Projects\\%s\\.roproj"):
+        print(directory)
+        if os.path.isfile("C:\\RoDevGameEngine\\Projects\\%s\\.roproj" % directory):
+            with open("C:\\RoDevGameEngine\\Projects\\%s\\.roproj" % directory, "r") as roproj_file:
+                project_data = load(roproj_file)
+                projects.append({
+                    "name": project_data["projectName"],
+                    "engine_version": project_data["engineVersion"]
+                })
 
 def update(window):
     global cur_menu, editing_account, username_last_frame, last_project_name, list_of_releases, last_selected_engine_version
@@ -233,10 +244,18 @@ def update(window):
                 cur_menu = Menu.PROJECTS
 
     if cur_menu == Menu.PROJECTS:
-        imgui.text("Projects Menu")
-        with imgui.begin_child():
-            for project in 
-            imgui.button("")
+        with imgui.begin_child("projects", *(window_width-27, window_height-50), True):
+            for project in projects:
+                imgui.text(project["name"])
+                imgui.same_line()
+                imgui.text(" - ")
+                imgui.same_line()
+                imgui.text("Engine Version: %s" % project["engine_version"])
+                imgui.same_line()
+                imgui.set_cursor_pos_x(window_width - 157)
+                if imgui.button("Edit", 120):
+                    os.system(f'py "C:\\RoDevGameEngine\\Projects\\{project["name"]}\\main.py" --boot-state Edit')
+                imgui.separator()
         if imgui.button("Create New Project"):
             cur_menu = Menu.CREATE_PROJECT_MENU
 
@@ -254,7 +273,7 @@ def update(window):
                     create_proj(create_project_name, list_of_releases[engine_version]['zipball_url'])
                     cur_menu = Menu.PROJECTS
                 except Exception as e:
-                    print("Error: %s" % str(e))
+                    raise e
             else:
                 imgui.text("Please enter a project name.")
 
@@ -295,6 +314,8 @@ def update(window):
 
     # Poll for and process events
     glfw.poll_events()
+
+get_projects()
 
 # Main loop
 while not glfw.window_should_close(window):

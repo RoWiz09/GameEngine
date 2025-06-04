@@ -112,7 +112,7 @@ class window:
 
                     with imgui.begin_menu("Scene") as gameobjects_menu:
                         if gameobjects_menu.opened:
-                            if imgui.menu_item("Scene Customization"):
+                            if imgui.menu_item("Scene Customization")[1]:
                                 self.render_scene_data_editor = True
 
                             if imgui.menu_item("Hierarchy", 'Ctrl+H', False, True)[1]:
