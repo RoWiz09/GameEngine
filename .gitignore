@@ -115,3 +115,5 @@ cython_debug/
 
 # Ignore Hub account file
 account.json
+
+*.zip

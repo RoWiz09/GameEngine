@@ -10,11 +10,12 @@ import os
 
 # Ensure the current working directory is the script's directory
 script_dir = os.path.dirname(os.path.abspath(__file__))
-os.path.isfile("account.json") or open("account.json", "w").write('{"username": "No Account"}')
+os.path.isfile("account.json") or open("account.json", "w").write('{"username": "No Account", "python_loc": ""}')
 
 # Load Account Data
 with open("account.json", "r") as account_file:
     ACCOUNT_DATA = load(account_file)
+    print("Account Data Loaded:", ACCOUNT_DATA)
 
 # Initialize the GLFW library
 if not glfw.init():
@@ -74,12 +75,13 @@ cur_menu = Menu.PROJECTS
 editing_account = False
 
 username_last_frame = ACCOUNT_DATA["username"]
+python_exe_loc_last_frame = ACCOUNT_DATA["python_loc"]
 last_project_name = ""
 
 last_selected_engine_version = 0
 projects = []
 
-def create_proj(project_name:str, engine_version_download_url:str):
+def create_proj(project_name:str, engine_version_download_url:str, engine_version:str):
     if not os.path.isdir("C:\\RoDevGameEngine\\Projects\\"):
         os.mkdir("C:\\RoDevGameEngine\\Projects\\")
 
@@ -224,12 +226,12 @@ elif args.boot_state == BootState.PLAY.value:
         for file in zipFile.filelist:
             if not file.is_dir():
                 with zipFile.open(file) as zip_file:
-                    if "/".join(zip_file.name.split("/")[2:]):
+                    if "/".join(zip_file.name.split("/")[1:]):
                         # Create the necessary directories in the project folder
-                        os.makedirs(os.path.dirname("C:\\RoDevGameEngine\\Projects\\%s\\RoDevGameEngine\\%s" % (project_name, "/".join(zip_file.name.split("/")[2:]))), exist_ok=True)
+                        os.makedirs(os.path.dirname("C:\\RoDevGameEngine\\Projects\\%s\\RoDevGameEngine\\%s" % (project_name, "/".join(zip_file.name.split("/")[1:]))), exist_ok=True)
 
                         # Write the file to the project folder
-                        with open("C:\\RoDevGameEngine\\Projects\\%s\\RoDevGameEngine\\%s" % (project_name, "/".join(zip_file.name.split("/")[2:])), 'wb') as extracted_file:
+                        with open("C:\\RoDevGameEngine\\Projects\\%s\\RoDevGameEngine\\%s" % (project_name, "/".join(zip_file.name.split("/")[1:])), 'wb') as extracted_file:
                             extracted_file.write(zip_file.read())
     
     with open("C:\\RoDevGameEngine\\Projects\\%s\\.roproj" % project_name, "w") as roproj_file:
@@ -238,13 +240,24 @@ elif args.boot_state == BootState.PLAY.value:
                 "projectName": "%s",
                 "engineVersion": "%s"
             }
-        """ % (project_name, engine_version_download_url.split("/")[-1]))
+        """ % (project_name, engine_version))
         roproj_file.close()
 
     # Remove the downloaded zip file
     os.remove(zip_path)
 
 list_of_releases = get_all_releases()
+
+def get_engine_download_url(engine_version):
+    global list_of_releases
+    if list_of_releases is None:
+        raise Exception("No releases found. Please check your internet connection or the repository URL.")
+    
+    for release in list_of_releases[engine_version]["assets"]:
+        if release["name"] == "Engine.zip":
+            return release["browser_download_url"]
+
+print(list_of_releases[last_selected_engine_version]["assets"])
 
 def get_projects():
     global projects
@@ -260,7 +273,7 @@ def get_projects():
                 })
 
 def update(window):
-    global cur_menu, editing_account, username_last_frame, last_project_name, list_of_releases, last_selected_engine_version
+    global cur_menu, editing_account, username_last_frame, last_project_name, list_of_releases, last_selected_engine_version, python_exe_loc_last_frame, ACCOUNT_DATA, projects
 
     # Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -297,7 +310,8 @@ def update(window):
                 imgui.set_cursor_pos_x(window_width - 157)
                 if imgui.button("Edit", 120):
                     import subprocess
-                    subprocess.run(["python", "C:\\RoDevGameEngine\\Projects\\%s\\main.py" % project["name"], "--boot-state", "Edit"], cwd="C:\\RoDevGameEngine\\Projects\\%s" % project["name"])
+                    print(python_exe_loc_last_frame+"\\python.exe")
+                    subprocess.run([python_exe_loc_last_frame+"\\python.exe", "C:\\RoDevGameEngine\\Projects\\%s\\main.py" % project["name"], "--boot-state", "Edit"], cwd="C:\\RoDevGameEngine\\Projects\\%s" % project["name"])
                 imgui.separator()
         if imgui.button("Create New Project"):
             cur_menu = Menu.CREATE_PROJECT_MENU
@@ -313,7 +327,9 @@ def update(window):
         if imgui.button("Create Project"):
             if create_project_name:
                 try:
-                    create_proj(create_project_name, list_of_releases[engine_version]['zipball_url'])
+                    create_proj(create_project_name, get_engine_download_url(engine_version), list_of_releases[engine_version]["tag_name"])
+                    last_project_name = ""
+                    get_projects()
                     cur_menu = Menu.PROJECTS
                 except Exception as e:
                     raise e
@@ -327,10 +343,14 @@ def update(window):
             username = imgui.input_text("Username", username_last_frame, 256)[1]
             username_last_frame = username
 
+            python_exe_loc = imgui.input_text("Python Location", python_exe_loc_last_frame, 256)[1]
+            python_exe_loc_last_frame = python_exe_loc
+
             if imgui.button("Save Account"):
                 editing_account = False
                 with open("account.json", "w") as account_file:
                     ACCOUNT_DATA["username"] = username
+                    ACCOUNT_DATA["python_loc"] = python_exe_loc
                     dump(ACCOUNT_DATA, account_file, indent=4)
 
             if imgui.button("Cancel"):
