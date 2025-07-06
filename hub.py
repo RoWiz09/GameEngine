@@ -1,12 +1,15 @@
 import glfw
 from OpenGL.GL import *
 
+import subprocess
 import imgui
 from imgui.integrations.glfw import GlfwRenderer
 from enum import Enum
 
+import shutil, pathlib as pl
+
 from json import load, dump
-import os
+import os, stat
 
 # Ensure the current working directory is the script's directory
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -57,11 +60,11 @@ import requests
 import zipfile
 
 def get_all_releases():
-    url = f"https://api.github.com/repos/RoWiz09/Autoflipper/releases"
+    url = f"https://api.github.com/repos/RoWiz09/GameEngine/releases"
     response = requests.get(url, headers={"Accept": "application/vnd.github.v3+json"})  # Use GitHub API headers
     # Check if the request was successful
     if response.status_code == 404:
-        print(f"Repository 'RoWiz09/Autoflipper' not found.")
+        print(f"Repository 'RoWiz09/GameEngine' not found.")
         return None
     elif response.status_code != 200:
         print(f"Failed to fetch releases. Status code: {response.status_code}")
@@ -79,16 +82,20 @@ last_project_name = ""
 last_selected_engine_version = 0
 projects = []
 
-def create_proj(project_name:str, engine_version_download_url:str):
-    if not os.path.isdir("C:\\RoDevGameEngine\\Projects\\"):
-        os.mkdir("C:\\RoDevGameEngine\\Projects\\")
+home_path = pl.Path.home()
 
-    if os.path.isdir("C:\\RoDevGameEngine\\Projects\\%s"%project_name):
+def create_proj(project_name:str, engine_version_download_url:str, engine_version:str):
+    global home_path
+
+    if not os.path.isdir(f"{home_path}\\RoDevGameEngine\\Projects\\"):
+        os.mkdir(f"{home_path}\\RoDevGameEngine\\Projects\\")
+
+    if os.path.isdir(f"{home_path}\\RoDevGameEngine\\Projects\\%s"%project_name):
         raise Exception("Project with name '%s' already exists!"%project_name)
 
-    os.mkdir("C:\\RoDevGameEngine\\Projects\\%s"%project_name)
+    os.mkdir(f"{home_path}\\RoDevGameEngine\\Projects\\%s"%project_name)
 
-    with open("C:\\RoDevGameEngine\\Projects\\%s\\main.py"%(project_name), "w") as project_file:
+    with open(f"{home_path}\\RoDevGameEngine\\Projects\\%s\\main.py"%(project_name), "w") as project_file:
         project_file.write("""
 import argparse
 from enum import Enum
@@ -108,9 +115,9 @@ if args.boot_state == BootState.EDIT.value:
     from RoDevGameEngine import editor_window
     from json import load
 
-    projectData = load(open(".assets\\main.json"))
+    projectData = load(open("./assets/main.json"))
 
-    game_window = editor_window.window(projectData['projectName'], starting_scene=projectData["startingScene"], compiled=projectData.get("compiled"))
+    game_window = editor_window.window(projectData['projectName'], starting_scene=projectData["startingScene"], compiled=None)
     game_window.start_update_loop()
 
 elif args.boot_state == BootState.BUILD.value:
@@ -120,15 +127,15 @@ elif args.boot_state == BootState.PLAY.value:
     from RoDevGameEngine import window as game_window
     from json import load
 
-    projectData = load(open(".assets\\main.json"))
+    projectData = load(open("./assets/main.json"))
 
-    game_window = game_window.window(projectData['projectName'], starting_scene=projectData["startingScene"], compiled=projectData.get("compiled"))
+    game_window = game_window.window(projectData['projectName'], starting_scene=projectData["startingScene"], compiled=False)
     game_window.start_update_loop()
 """)
 
-    os.mkdir("C:\\RoDevGameEngine\\Projects\\%s\\assets"%project_name)
+    os.mkdir(f"{home_path}\\RoDevGameEngine\\Projects\\%s\\assets"%project_name)
 
-    with open("C:\\RoDevGameEngine\\Projects\\%s\\assets\\main.json"%project_name, "w") as project_json:
+    with open(f"{home_path}\\RoDevGameEngine\\Projects\\%s\\assets\\main.json"%project_name, "w") as project_json:
         project_data = {
             "projectName": project_name,
             "startingScene": 0,
@@ -138,12 +145,12 @@ elif args.boot_state == BootState.PLAY.value:
         project_json.close()
 
     # Set up materials folder
-    os.mkdir("C:\\RoDevGameEngine\\Projects\\%s\\assets\\materials"%project_name)
-    with open("C:\\RoDevGameEngine\\Projects\\%s\\assets\\materials\\sample_mat.romat"%project_name, "w") as sample_mat:
+    os.mkdir(f"{home_path}\\RoDevGameEngine\\Projects\\%s\\assets\\materials"%project_name)
+    with open(f"{home_path}\\RoDevGameEngine\\Projects\\%s\\assets\\materials\\sample_mat.romat"%project_name, "w") as sample_mat:
         sample_mat.write("""
             {
                 "color":[1, 1, 1, 1],
-                "texture_path":".\\RoDevGameEngine\\base_texture.png",
+                "texture_path":"./RoDevGameEngine/base_texture.png",
                 "shader":"['base_vert_3d','base_frag_3d']",
                 "tiling_data":[1,1]
             }
@@ -152,13 +159,13 @@ elif args.boot_state == BootState.PLAY.value:
         sample_mat.close()
 
     # Set up scenes folder
-    os.mkdir("C:\\RoDevGameEngine\\Projects\\%s\\assets\\scenes"%project_name)
-    with open("C:\\RoDevGameEngine\\Projects\\%s\\assets\\scenes\\sample_scene.roscene"%project_name, "w") as sample_scene:
+    os.mkdir(f"{home_path}\\RoDevGameEngine\\Projects\\%s\\assets\\scenes"%project_name)
+    with open(f"{home_path}\\RoDevGameEngine\\Projects\\%s\\assets\\scenes\\sample_scene.roscene"%project_name, "w") as sample_scene:
         sample_scene.write("""
             {
                 "baseCamera":{"name":"playerCam","pos":[0,0,0],"rot":[0,0,0]},
                 "3d":{
-                    "testCube":{"mesh_obj":"cube","components":{"RoDevGameEngine.physics.collider":[{"class_name":"OBB","vars":["normal_collider"]}]},"pos":[0,0,0],"rot":[0,0,0],"scale":[1,1,1],"material":"assets\\materials\\sample_mat.romat"},
+                    "testCube":{"mesh_obj":"cube","components":{"RoDevGameEngine.physics.collider":[{"class_name":"OBB","vars":["normal_collider"]}]},"pos":[0,0,0],"rot":[0,0,0],"scale":[1,1,1],"material":"assets/materials/sample_mat.romat"}
                 },
                 "2d":{
 
@@ -169,15 +176,15 @@ elif args.boot_state == BootState.PLAY.value:
 
         sample_scene.close()
 
-    os.mkdir("C:\\RoDevGameEngine\\Projects\\%s\\assets\\scripts"%project_name)
-    os.mkdir("C:\\RoDevGameEngine\\Projects\\%s\\assets\\textures"%project_name)
+    os.mkdir(f"{home_path}\\RoDevGameEngine\\Projects\\%s\\assets\\scripts"%project_name)
+    os.mkdir(f"{home_path}\\RoDevGameEngine\\Projects\\%s\\assets\\textures"%project_name)
 
     # Download and extract the engine
-    engine_folder = "C:\\RoDevGameEngine\\Projects\\%s\\" % project_name
+    engine_folder = f"{home_path}\\RoDevGameEngine\\Projects\\%s\\RoDevGameEngine" % project_name
     os.mkdir(engine_folder)
 
     # Download the engine zip file
-    zip_path = os.path.join("C:\\RoDevGameEngine\\Projects\\%s\\engine.zip" % project_name)
+    zip_path = os.path.join(f"{home_path}\\RoDevGameEngine\\Projects\\%s\\engine.zip" % project_name)
     response = requests.get(engine_version_download_url, stream=True)
     if response.status_code == 200:
         with open(zip_path, 'wb') as zip_file:
@@ -187,30 +194,68 @@ elif args.boot_state == BootState.PLAY.value:
         raise Exception(f"Failed to download engine. Status code: {response.status_code}")
 
     # Extract the zip file directly into the project folder
-    with zipfile.ZipFile(zip_path) as zipFile:
-        zipFile.extractall(engine_folder)
+    import stat
+
+    def ensure_writable(path):
+        if os.path.exists(path):
+            os.chmod(path, stat.S_IWRITE)
+
+    with zipfile.ZipFile(zip_path) as zip_File:
+        for file in zip_File.namelist():
+            info = zip_File.getinfo(file)
+
+            # Skip directories
+            if info.is_dir():
+                continue
+
+            # Build full target path
+            file_path = os.path.join(engine_folder, os.path.relpath(file, start=zip_File.namelist()[0]))
+            file_path = os.path.normpath(file_path)
+
+            # Ensure the directory exists
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+            # Ensure the file is writable if it already exists
+            ensure_writable(file_path)
+
+            # Extract the file
+            with zip_File.open(file) as source, open(file_path, "wb") as target:
+                target.write(source.read())
     
-    with open("C:\\RoDevGameEngine\\Projects\\%s\\.roproj" % project_name, "w") as roproj_file:
+    with open(f"{home_path}\\RoDevGameEngine\\Projects\\%s\\.roproj" % project_name, "w") as roproj_file:
         roproj_file.write("""
             {
                 "projectName": "%s",
                 "engineVersion": "%s"
             }
-        """ % (project_name, engine_version_download_url.split("/")[-1]))
+        """ % (project_name, engine_version))
         roproj_file.close()
 
     # Remove the downloaded zip file
     os.remove(zip_path)
 
 list_of_releases = get_all_releases()
+dirpath = f"{home_path}"
+os.makedirs(dirpath + "\\RoDevGameEngine\\Projects", exist_ok=True)
+
+current_permissions = os.stat(dirpath).st_mode
+os.chmod(dirpath, current_permissions | stat.S_IWUSR)
+
+def get_github_zip_release(releases_dict):
+    for release in releases_dict["assets"]:
+        if release.get('name') == 'Engine.zip':
+            return release
+        
+    return None
 
 def get_projects():
-    global projects
+    global projects, home_path
 
-    for directory in os.listdir("C:\\RoDevGameEngine\\Projects"):
-        print(directory)
-        if os.path.isfile("C:\\RoDevGameEngine\\Projects\\%s\\.roproj" % directory):
-            with open("C:\\RoDevGameEngine\\Projects\\%s\\.roproj" % directory, "r") as roproj_file:
+    projects.clear()
+
+    for directory in os.listdir(f"{home_path}\\RoDevGameEngine\\Projects"):
+        if os.path.isfile(f"{home_path}\\RoDevGameEngine\\Projects\\%s\\.roproj" % directory):
+            with open(f"{home_path}\\RoDevGameEngine\\Projects\\%s\\.roproj" % directory, "r") as roproj_file:
                 project_data = load(roproj_file)
                 projects.append({
                     "name": project_data["projectName"],
@@ -252,10 +297,19 @@ def update(window):
                 imgui.same_line()
                 imgui.text("Engine Version: %s" % project["engine_version"])
                 imgui.same_line()
+
+                imgui.set_cursor_pos_x(window_width - 287)
+                if imgui.button(f"Delete##Del{project['name']}", 120):
+                    shutil.rmtree(f'{home_path}\\RoDevGameEngine\\Projects\\{project["name"]}')
+                    get_projects()
+                imgui.same_line()
+
                 imgui.set_cursor_pos_x(window_width - 157)
-                if imgui.button("Edit", 120):
-                    os.system(f'py "C:\\RoDevGameEngine\\Projects\\{project["name"]}\\main.py" --boot-state Edit')
+                if imgui.button(f"Edit##Edit{project['name']}", 120):
+                    subprocess.run(f'py "{home_path}\\RoDevGameEngine\\Projects\\{project["name"]}\\main.py" --boot-state Edit', cwd=f'{home_path}\\RoDevGameEngine\\Projects\\{project["name"]}')
+
                 imgui.separator()
+
         if imgui.button("Create New Project"):
             cur_menu = Menu.CREATE_PROJECT_MENU
 
@@ -270,8 +324,10 @@ def update(window):
         if imgui.button("Create Project"):
             if create_project_name:
                 try:
-                    create_proj(create_project_name, list_of_releases[engine_version]['zipball_url'])
+                    create_proj(create_project_name, get_github_zip_release(list_of_releases[engine_version])['browser_download_url'], list_of_releases[engine_version]['tag_name'])
                     cur_menu = Menu.PROJECTS
+                    get_projects()
+
                 except Exception as e:
                     raise e
             else:
