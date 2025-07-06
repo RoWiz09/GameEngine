@@ -4,6 +4,8 @@ import OpenGL.GL as gl
 
 from RoDevGameEngine.gizmos.line import LineRenderer
 
+from RoDevGameEngine.rendering.camera import Camera
+
 from RoDevGameEngine import gameObjects
 from RoDevGameEngine import transform
 from RoDevGameEngine import material
@@ -12,6 +14,7 @@ from RoDevGameEngine import script
 from RoDevGameEngine import input
 from RoDevGameEngine import light
 from RoDevGameEngine import mesh
+
 from json import load, dump
 
 sceneManager = None
@@ -26,8 +29,10 @@ class SceneManager:
 
         self.materials : dict[str,material.Material] = {}
 
-        self.freecam_camera = gameObjects.editor_camera()
+        self.freecam_camera = None
         self.editor_freecam_active = False
+
+        self.active_camera : Camera = None
 
         if not compiled:
             materials = self.get_materials("assets")
@@ -98,14 +103,21 @@ class SceneManager:
                 for var in component_dict[component].get("vars",{}).keys():
                     setattr(components[-1], var, component_dict[component].get("vars",{})[var])
 
-                components[-1].set_active(component_dict[component].get("active",True))
+                active = component_dict[component].get("active",True)
+                components[-1].set_active(active)
+                if self.active_camera == None and issubclass(type(components[-1]), light.Camera) and active:
+                    self.active_camera = components[-1]
+
             else:
                 for sub_component in range(len(component_dict[component])):
                     components.append(getattr(component_code, component_dict[component][sub_component]["class_name"])(gameObject,component))
                     for var in component_dict[component][sub_component].get("vars",{}).keys():
                         setattr(components[-1], var, component_dict[component].get("vars",{})[var])
                         
-                    components[-1].set_active(component_dict[component].get("active",True))
+                    active = component_dict[component].get("active",True)
+                    components[-1].set_active(active)
+                    if self.active_camera == None and issubclass(type(components[-1]), Camera) and active:
+                        self.active_camera = components[-1]
         
         return components
     
@@ -156,8 +168,7 @@ class SceneManager:
                     self.scene_data : dict = ast.literal_eval(sceneFile.read().decode().replace("\n", "").replace("\r", ""))
                     self.scene = self.scene_data["scene_index"]
 
-                    if self.freecam_camera:
-                        self.freecam_camera.position = glm.vec3(0,0,0)
+                    self.active_camera = None
                 
                     for object3d in self.scene_data["3d"].keys():
                         if isinstance(self.scene_data["3d"][object3d], dict):
@@ -230,8 +241,7 @@ class SceneManager:
                     self.scene_data : dict = ast.literal_eval(sceneFile.read().decode().replace("\n", "").replace("\r", ""))
                     self.scene = self.scene_data["scene_index"]
 
-                    if self.freecam_camera:
-                        self.freecam_camera.position = glm.vec3(0,0,0)
+                    self.active_camera = None
                 
                     for object3d in self.scene_data["3d"].keys():
                         if isinstance(self.scene_data["3d"][object3d], dict):
@@ -261,12 +271,13 @@ class SceneManager:
 
                                 self.scene_objects.append(gameObject)
 
-    def load_scene(self):
+    def load_scene(self, camera_class = None):
         if not self.compiled:
             with open(self.scenes[self.scene]) as sceneFile:
                 self.scene_objects.clear()
 
                 self.scene_data : dict = load(sceneFile)
+                self.freecam_camera = camera_class()
                 
                 for object3d in self.scene_data["3d"].keys():
                     if isinstance(self.scene_data["3d"][object3d], dict):
@@ -298,9 +309,7 @@ class SceneManager:
         else:
             with zipfile.ZipFile("./assets.zip") as zipFile:
                 with zipFile.open(self.scenes[self.scene]) as sceneFile:
-                    self.scene_data : dict = ast.literal_eval(sceneFile.read().decode().replace("\n", "").replace("\r", ""))
-
-                    self.freecam_camera = gameObjects.editor_camera()
+                    self.scene_data : dict = ast.literal_eval(sceneFile.read().decode().strip("\n").strip("\r"))
                 
                     for object3d in self.scene_data["3d"].keys():
                         if isinstance(self.scene_data["3d"][object3d], dict):
@@ -341,12 +350,6 @@ class SceneManager:
         cur_time = time.time()
         deltatime = cur_time-self.last_time
         self.last_time = cur_time
-
-        mx, my = glfw.get_cursor_pos(self.window.window)
-        self.freecam_camera.process_keyboard(deltatime)
-        window_size = glfw.get_window_size(self.window.window)
-        self.freecam_camera.process_mouse_movement(mx-window_size[0]/2, -my+window_size[1]/2)
-        glfw.set_cursor_pos(self.window.window, window_size[0]/2, window_size[1]/2)
 
         view = glm.lookAt(self.freecam_camera.position, self.freecam_camera.position + self.freecam_camera.front, self.freecam_camera.up)
         projection = glm.perspective(glm.radians(self.freecam_camera.zoom), res[0] / res[1], 0.1, 16384.0)

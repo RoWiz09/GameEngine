@@ -8,6 +8,9 @@ from RoDevGameEngine.input import handle_inputs, get_key_down, keyCodes
 from RoDevGameEngine.sceneManager import create_scene_manager
 import glfw, OpenGL.GL as gl, glm, PIL.Image
 
+import numpy as np
+import keyboard
+
 import imgui
 from imgui.integrations.glfw import GlfwRenderer
 
@@ -332,3 +335,66 @@ class window:
             imgui.render()
             self.imgui_renderer.render(imgui.get_draw_data())
             glfw.swap_buffers(self.window)
+
+class editor_camera:
+    """
+        A non-physical object in the game's scene. 
+    """
+    def __init__(self, position=glm.vec3(0.0, 0.0, 0.0), up=glm.vec3(0.0, 1.0, 0.0), yaw=-90.0, pitch=0.0):
+        """
+            Creates and returns a new camera instance. 
+            
+            args:
+                position (glm.vec3): The position of the camera in world space.
+                up (glm.vec3): The up vector of the camera.
+                yaw (float): The yaw of the camera in degrees.
+                pitch (float): The pitch of the camera in degrees.
+        """
+        self.position = position
+        self.front = glm.vec3(0.0, 0.0, -1.0)
+        self.up = up
+        self.right = glm.vec3()
+        self.world_up = up
+        self.yaw = yaw
+        self.pitch = pitch
+        self.speed = 5 
+        self.sensitivity = 0.5
+        self.zoom = 45.0
+        self.update_vectors()
+
+    def update_vectors(self):
+        front = glm.vec3()
+        front.x = np.cos(glm.radians(self.yaw)) * np.cos(glm.radians(self.pitch))
+        front.y = np.sin(glm.radians(self.pitch))
+        front.z = np.sin(glm.radians(self.yaw)) * np.cos(glm.radians(self.pitch))
+        self.front = glm.normalize(front)
+        self.right = glm.normalize(glm.cross(self.front, self.world_up))
+        self.up = glm.normalize(glm.cross(self.right, self.front))
+
+    def process_keyboard(self, delta_time):
+        velocity = self.speed * delta_time
+        if keyboard.is_pressed("w"):
+            self.position += self.front * velocity
+        if keyboard.is_pressed("s"):
+            self.position -= self.front * velocity
+        if keyboard.is_pressed("a"):
+            self.position -= self.right * velocity
+        if keyboard.is_pressed("d"):
+            self.position += self.right * velocity
+
+    def process_mouse_movement(self, x_offset, y_offset, constrain_pitch=True):
+        x_offset *= self.sensitivity
+        y_offset *= self.sensitivity
+
+        self.yaw += x_offset
+        self.pitch += y_offset
+
+        if constrain_pitch:
+            if self.pitch > 89.0:
+                self.pitch = 89.0
+            if self.pitch < -89.0:
+                self.pitch = -89.0
+
+        self.update_vectors()
+
+

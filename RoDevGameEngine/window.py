@@ -1,9 +1,8 @@
-from RoDevGameEngine.shaders import BaseShaderProgram
-from RoDevGameEngine.gameObjects import gameObject3D, Mesh, transform
-from RoDevGameEngine.material import Material
 from RoDevGameEngine.input import handle_inputs
 from RoDevGameEngine.sceneManager import create_scene_manager
-import glfw, OpenGL.GL as gl, glm, PIL.Image
+import glfw, OpenGL.GL as gl
+
+window_ = None
 
 class window:
     def __init__(self, project_name : str, starting_scene : int = 0, fullscreen = False, monitor = None, compiled = False):
@@ -22,6 +21,10 @@ class window:
             self.window = glfw.create_window(*glfw.get_monitor_workarea(get_monitor(monitor))[2:4], project_name, monitor, None)
         else:
             self.window = glfw.create_window(*glfw.get_monitor_workarea(get_monitor(monitor))[2:4], project_name, None, None)
+
+        global window
+        window = self.window
+
         glfw.set_window_pos(self.window, 0, 0)
         glfw.make_context_current(self.window)
         

@@ -13,11 +13,12 @@ import os, stat
 
 # Ensure the current working directory is the script's directory
 script_dir = os.path.dirname(os.path.abspath(__file__))
-os.path.isfile("account.json") or open("account.json", "w").write('{"username": "No Account"}')
+os.path.isfile("account.json") or open("account.json", "w").write('{"username": "No Account", "python_loc": ""}')
 
 # Load Account Data
 with open("account.json", "r") as account_file:
     ACCOUNT_DATA = load(account_file)
+    print("Account Data Loaded:", ACCOUNT_DATA)
 
 # Initialize the GLFW library
 if not glfw.init():
@@ -77,6 +78,7 @@ cur_menu = Menu.PROJECTS
 editing_account = False
 
 username_last_frame = ACCOUNT_DATA["username"]
+python_exe_loc_last_frame = ACCOUNT_DATA["python_loc"]
 last_project_name = ""
 
 last_selected_engine_version = 0
@@ -139,7 +141,6 @@ elif args.boot_state == BootState.PLAY.value:
         project_data = {
             "projectName": project_name,
             "startingScene": 0,
-            "compiled": False
         }
         dump(project_data, project_json, indent=4)
         project_json.close()
@@ -166,13 +167,35 @@ elif args.boot_state == BootState.PLAY.value:
                 "baseCamera":{"name":"playerCam","pos":[0,0,0],"rot":[0,0,0]},
                 "3d":{
                     "testCube":{"mesh_obj":"cube","components":{"RoDevGameEngine.physics.collider":[{"class_name":"OBB","vars":["normal_collider"]}]},"pos":[0,0,0],"rot":[0,0,0],"scale":[1,1,1],"material":"assets/materials/sample_mat.romat"}
-                },
-                "2d":{
 
                 },
-                "scene_index":0
+                "pos": [0.0, 0.0, 0.0],
+                "rot": [0.0, 0.0, 0.0],
+                "scale": [1.0, 1.0, 1.0],
+                "material": "assets\\\\materials\\\\samplemat.romat"
+            },
+            "light0": {
+                "mesh_obj": null,
+                "components": {
+                "RoDevGameEngine.light": {
+                    "class_name": "Light",
+                    "vars": {
+                    "color": [1.0, 0.0, 0.0],
+                    "original_constant": 6,
+                    "original_intensity": 12,
+                    "range": 15
+                    }
+                }
+                },
+                "pos": [0.0, 1.0, 0.0],
+                "rot": [0.0, 0.0, 0.0],
+                "scale": [1.0, 1.0, 1.0],
+                "material": null
             }
-        """)
+            },
+            "2d": {},
+            "scene_index": 0
+        }""")
 
         sample_scene.close()
 
@@ -248,6 +271,17 @@ def get_github_zip_release(releases_dict):
         
     return None
 
+def get_engine_download_url(engine_version):
+    global list_of_releases
+    if list_of_releases is None:
+        raise Exception("No releases found. Please check your internet connection or the repository URL.")
+    
+    for release in list_of_releases[engine_version]["assets"]:
+        if release["name"] == "Engine.zip":
+            return release["browser_download_url"]
+
+print(list_of_releases[last_selected_engine_version]["assets"])
+
 def get_projects():
     global projects, home_path
 
@@ -263,7 +297,7 @@ def get_projects():
                 })
 
 def update(window):
-    global cur_menu, editing_account, username_last_frame, last_project_name, list_of_releases, last_selected_engine_version
+    global cur_menu, editing_account, username_last_frame, last_project_name, list_of_releases, last_selected_engine_version, python_exe_loc_last_frame, ACCOUNT_DATA, projects
 
     # Clear the screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -307,7 +341,7 @@ def update(window):
                 imgui.set_cursor_pos_x(window_width - 157)
                 if imgui.button(f"Edit##Edit{project['name']}", 120):
                     subprocess.run(f'py "{home_path}\\RoDevGameEngine\\Projects\\{project["name"]}\\main.py" --boot-state Edit', cwd=f'{home_path}\\RoDevGameEngine\\Projects\\{project["name"]}')
-
+                    
                 imgui.separator()
 
         if imgui.button("Create New Project"):
@@ -340,10 +374,14 @@ def update(window):
             username = imgui.input_text("Username", username_last_frame, 256)[1]
             username_last_frame = username
 
+            python_exe_loc = imgui.input_text("Python Location", python_exe_loc_last_frame, 256)[1]
+            python_exe_loc_last_frame = python_exe_loc
+
             if imgui.button("Save Account"):
                 editing_account = False
                 with open("account.json", "w") as account_file:
                     ACCOUNT_DATA["username"] = username
+                    ACCOUNT_DATA["python_loc"] = python_exe_loc
                     dump(ACCOUNT_DATA, account_file, indent=4)
 
             if imgui.button("Cancel"):

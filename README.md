@@ -15,8 +15,8 @@ My Python game engine
 Unfinished
 
 ## Libraries
-> GLFW -> Window
-> pyOpenGL -> Rendering
+> GLFW -> Window\
+> pyOpenGL -> Rendering\
 > glm -> Helps with rendering
 > 
 > Imgui -> Editor UI
