@@ -139,7 +139,7 @@ class SceneManager:
                     if isinstance(self.scene_data["3d"][object3d], dict):
                         if self.scene_data["3d"][object3d]["mesh_obj"] == "cube":
                             gameObject = gameObjects.gameObject3D(object3d, mesh.Mesh(
-                                mesh.Mesh.cube_verts(), self.materials[self.scene_data["3d"][object3d]["material"]]) if self.scene_data["3d"][object3d]["material"] else None,
+                                mesh.Mesh.cube_verts(), self.materials[self.scene_data["3d"][object3d]["material"].replace("/", "\\")]) if self.scene_data["3d"][object3d]["material"] else None,
                                 my_transform=transform.transform(
                                     glm.vec3(*self.scene_data["3d"][object3d]["pos"]),
                                     glm.vec3(*self.scene_data["3d"][object3d]["rot"]),
@@ -174,7 +174,7 @@ class SceneManager:
                         if isinstance(self.scene_data["3d"][object3d], dict):
                             if self.scene_data["3d"][object3d]["mesh_obj"] == "cube":
                                 gameObject = gameObjects.gameObject3D(object3d, mesh.Mesh(
-                                    mesh.Mesh.cube_verts(), self.materials[self.scene_data["3d"][object3d]["material"]]),
+                                    mesh.Mesh.cube_verts(), self.materials[self.scene_data["3d"][object3d]["material"].replace("/", "\\")]),
                                     my_transform=transform.transform(
                                         glm.vec3(*self.scene_data["3d"][object3d]["pos"]),
                                         glm.vec3(*self.scene_data["3d"][object3d]["rot"]),
@@ -212,7 +212,7 @@ class SceneManager:
                     if isinstance(self.scene_data["3d"][object3d], dict):
                         if self.scene_data["3d"][object3d]["mesh_obj"] == "cube":
                             gameObject = gameObjects.gameObject3D(object3d, mesh.Mesh(
-                                mesh.Mesh.cube_verts(), self.materials[self.scene_data["3d"][object3d]["material"]]) if self.scene_data["3d"][object3d]["material"] else None,
+                                mesh.Mesh.cube_verts(), self.materials[self.scene_data["3d"][object3d]["material"].replace("/", "\\")]) if self.scene_data["3d"][object3d]["material"] else None,
                                 my_transform=transform.transform(
                                     glm.vec3(*self.scene_data["3d"][object3d]["pos"]),
                                     glm.vec3(*self.scene_data["3d"][object3d]["rot"]),
@@ -247,7 +247,7 @@ class SceneManager:
                         if isinstance(self.scene_data["3d"][object3d], dict):
                             if self.scene_data["3d"][object3d]["mesh_obj"] == "cube":
                                 gameObject = gameObjects.gameObject3D(object3d, mesh.Mesh(
-                                    mesh.Mesh.cube_verts(), self.materials[self.scene_data["3d"][object3d]["material"]]),
+                                    mesh.Mesh.cube_verts(), self.materials[self.scene_data["3d"][object3d]["material"].replace("/", "\\")]),
                                     my_transform=transform.transform(
                                         glm.vec3(*self.scene_data["3d"][object3d]["pos"]),
                                         glm.vec3(*self.scene_data["3d"][object3d]["rot"]),
@@ -283,7 +283,7 @@ class SceneManager:
                     if isinstance(self.scene_data["3d"][object3d], dict):
                         if self.scene_data["3d"][object3d]["mesh_obj"] == "cube":
                             gameObject = gameObjects.gameObject3D(object3d, mesh.Mesh(
-                                mesh.Mesh.cube_verts(), self.materials[self.scene_data["3d"][object3d]["material"]]) if self.scene_data["3d"][object3d]["material"] else None,
+                                mesh.Mesh.cube_verts(), self.materials[self.scene_data["3d"][object3d]["material"].replace("/", "\\")]) if self.scene_data["3d"][object3d]["material"] else None,
                                 my_transform=transform.transform(
                                     glm.vec3(*self.scene_data["3d"][object3d]["pos"]),
                                     glm.vec3(*self.scene_data["3d"][object3d]["rot"]),
@@ -315,7 +315,7 @@ class SceneManager:
                         if isinstance(self.scene_data["3d"][object3d], dict):
                             if self.scene_data["3d"][object3d]["mesh_obj"] == "cube":
                                 gameObject = gameObjects.gameObject3D(object3d, mesh.Mesh(
-                                    mesh.Mesh.cube_verts(), self.materials[self.scene_data["3d"][object3d]["material"]]),
+                                    mesh.Mesh.cube_verts(), self.materials[self.scene_data["3d"][object3d]["material"].replace("/", "\\")]),
                                     my_transform=transform.transform(
                                         glm.vec3(*self.scene_data["3d"][object3d]["pos"]),
                                         glm.vec3(*self.scene_data["3d"][object3d]["rot"]),

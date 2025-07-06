@@ -2,6 +2,13 @@ from typing_extensions import deprecated
 
 class script:
     def __init__(self, parent, script_path:str):
+        """
+        Base class for all scripts. Do not call this directly, instead inherit from it.
+
+        Args:
+            parent (gameObject3D): The game object this script is attached to.
+            script_path (str): The path to the script file.
+        """
         self._path = script_path
 
         self._always_run = False 

@@ -132,3 +132,15 @@ class Mesh:
             deg += deg_added
 
         return np.array(verticies, dtype=np.float32)
+    
+    def plane_verts():
+        return np.array([
+            # Face y+ (Top)
+            1.0, 0.0, 1.0,   1.0, 1.0,  0.0, 1.0, 0.0,  # Top-right
+            0.0, 0.0, 1.0,   0.0, 1.0,  0.0, 1.0, 0.0,  # Top-left
+            0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 1.0, 0.0,  # Bottom-left
+
+            1.0, 0.0, 1.0,   1.0, 1.0,  0.0, 1.0, 0.0,  # Top-right
+            0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 1.0, 0.0,  # Bottom-left
+            1.0, 0.0, 0.0,   1.0, 0.0,  0.0, 1.0, 0.0   # Bottom-right
+        ], dtype=np.float32)
