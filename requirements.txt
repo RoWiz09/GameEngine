@@ -1,0 +1,10 @@
+imgui
+pyglm==2.7.0
+pyOpenGL
+numpy
+pillow
+PyInstaller
+requests
+typing_extensions
+keyboard
+mouse
